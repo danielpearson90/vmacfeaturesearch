@@ -1,0 +1,22 @@
+---
+title: "Analysis_Report"
+author: "Daniel Pearson"
+date: "11 April 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(R.matlab)
+library(afex)
+library(emmeans)
+library(here)
+library(patchwork)
+library(cowplot)
+library(BayesFactor)
+```
+
+
