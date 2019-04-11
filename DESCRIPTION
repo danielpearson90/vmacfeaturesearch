@@ -1,13 +1,15 @@
 Package: vmacfeaturesearch
-Title: What the Package Does (One Line, Title Case)
+Title: Research Compendium for VMAC Feature Search Project
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Daniel",
+           family = "Pearson",
            role = c("aut", "cre"),
-           email = "first.last@example.com")
-Description: What the package does (one paragraph)
-License: What license it uses
+           email = "d.pearson@unsw.edu.au")
+Description: This repository contains the research compendium of a project that investigates whether overt attention to reward-related distractors can be suppressed under conditions that promote feature search (as in Gaspelin, Leonard, & Luck; 2017 - Attn Percept Psychophys)
+License: MIT + file LICENSE
 ByteCompile: true
 Encoding: UTF-8
 LazyData: true
+URL: https://github.com/danielpearson90/vmacfeaturesearch
+BugReports: https://github.com/danielpearson90/vmacfeaturesearch/issues
