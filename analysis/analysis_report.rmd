@@ -253,6 +253,13 @@ singleton_low_omissions <-  exptdata_means_byparticipant %>%
   select(m) %>%
   pull()
 
+singleton_absent_omissions <- exptdata_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "Absent") %>%
+  select(m) %>%
+  pull()
+
 feature_high_omissions <- exptdata_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Feature Search") %>%
@@ -264,6 +271,13 @@ feature_low_omissions <-  exptdata_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Feature Search") %>%
   filter(dType == "Low") %>%
+  select(m) %>%
+  pull()
+
+feature_absent_omissions <- exptdata_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "Absent") %>%
   select(m) %>%
   pull()
 
@@ -287,4 +301,291 @@ vmac_feature <- exptdata_means_byparticipant %>%
 vmac_condition_bayes <- ttestBF(x = vmac_singleton, y = vmac_feature)
 ```
 
+
+### Effect of Physical Salience
+Effect of physical salience ANOVA:
+```{r Effect of Physical Salience - Omissions}
+omissions_salience.ANOVA <- aov_car(m ~ condition*dType + Error(sub/dType), data = filter(exptdata_means_byparticipant, dType != "High"), anova_table = list(es="pes"))
+
+omissions_salience.ANOVA
+```
+
+Planned t-tests:
+```{r Effect of Physical Salience - Omissions - Planned t-tests}
+singleton_physicalsalience_omissions.ttest <- t.test(singleton_low_omissions, singleton_absent_omissions, paired = T)
+
+singleton_physicalsalience_omissions.es <- dz_calculator(singleton_low_omissions, singleton_absent_omissions)
+
+feature_physicalsalience_omissions.ttest <- t.test(feature_absent_omissions, feature_low_omissions, paired = T) # reverse the order here so can get positive t value
+
+feature_physicalsalience_omissions.es <- dz_calculator(feature_low_omissions, feature_absent_omissions)
+```
+
+# Gaze Data Analyses
+
+```{r Load Gaze Data, include=FALSE}
+saccade_files <- dir(path = here::here("analysis", "data", "derived_data","ProcessedSaccadeData"), pattern = "^S")
+
+saccade_filedata <- here::here("analysis", "data", "derived_data","ProcessedSaccadeData", saccade_files) %>%
+  map(readMat) %>%
+  map("saccadeSessionData") %>%
+  map(1) %>%
+  map(2) %>%
+  modify(as.data.frame)
+```
+
+```{r Tidy Gaze Data, include = FALSE}
+# collapse the data into a dataframe format
+saccade_filedata <- saccade_filedata %>%
+  map_df(bind_rows)
+
+# give the columns appropriate headers
+colnames(saccade_filedata)[1:13] <- c("subj", "trial", "latency", paste("loc", c(1:5), sep = "_"), "discardTrial", "anticipatorySaccade", "outsideFixation", "noSaccades", "noValidData")
+
+discardSaccadeCounter <- saccade_filedata %>%
+  mutate(bad_data_discard = case_when(noSaccades == 1 ~ 1,
+                                      noValidData == 1 ~ 1,
+                                      TRUE ~ 0)) %>%
+  group_by(subj) %>%
+  summarise(prop_discarded = mean(discardTrial)*100, prop_anticipatory = mean(anticipatorySaccade)*100, prop_outside_fix = mean(outsideFixation)*100, prop_bad_data = mean(bad_data_discard)*100)
+
+totalSaccadeTrialsDiscarded <- discardSaccadeCounter %>%
+  summarise_all(mean) %>%
+  summarise_all(round, 1)
+
+saccade_filedata <- saccade_filedata %>%
+  filter(discardTrial != 1) %>% # discard trials marked to be discarded
+  mutate(first_saccade_loc = loc_1*1+loc_2*2+loc_3*3+loc_4*4+loc_5*5) 
+
+saccadedata <- left_join(exptdata, saccade_filedata, by = c("sub" = "subj", "trial" = "trial")) %>% #join saccade data up with behavioural data
+  mutate(saccade_to_target = if_else(targetLoc == first_saccade_loc, 1, 0)) %>% # create variables indicating whether first saccade went towards the target...
+  mutate(saccade_to_singleton = if_else(dType == "Absent", 2, 
+                                        if_else(distractLoc == first_saccade_loc, 1, 0))) %>% # singleton (for all except distractor absent trials)
+  mutate(saccade_to_singleton = replace(saccade_to_singleton, saccade_to_singleton == 2, NA)) %>%
+  mutate(saccade_to_nonsingleton = if_else((dType != "Absent" & targetLoc != first_saccade_loc & distractLoc != first_saccade_loc & first_saccade_loc < 5) | (dType == "Absent" & targetLoc != first_saccade_loc & first_saccade_loc < 5), 1, 0)) %>% # or non-singleton
+  mutate(num_nonsingletons = if_else(dType == "Absent", 3, 2)) # add the number of nonsingletons for each trial type
+```
+
+
+## First saccade direction
+```{r First saccade direction - means}
+# calculate summary statistics for each participant
+saccadeData_means_byparticipant <- saccadedata %>%
+  ungroup() %>%
+  mutate(sub = as.factor(sub)) %>%
+  group_by(sub, condition, dType) %>%
+  summarise(saccade_to_target = mean(saccade_to_target, na.rm = T),
+            saccade_to_singleton = mean(saccade_to_singleton, na.rm = T),
+            saccade_to_nonsingleton = mean(saccade_to_nonsingleton, na.rm = T)/mean(num_nonsingletons, na.rm = T),
+            num_nonsingletons = mean(num_nonsingletons, na.rm = T))
+
+targetmeans <- summarySEwithin2(data = saccadeData_means_byparticipant, measurevar = "saccade_to_target", betweenvars = "condition", withinvars = c("dType"), idvar = "sub", na.rm = T) %>%
+  rename(proportionSaccades = saccade_to_target) %>%
+  mutate(stimType = "Target") %>%
+  select(-ends_with("Normed"))
+
+singletonmeans <- summarySEwithin2(data = saccadeData_means_byparticipant, measurevar = "saccade_to_singleton", betweenvars = "condition", withinvars = c("dType"), idvar = "sub", na.rm = T) %>%
+  rename(proportionSaccades = saccade_to_singleton) %>%
+  mutate(stimType = "Singleton")%>%
+  select(-ends_with("Normed"))
+
+nonsingletonmeans <- summarySEwithin2(data = saccadeData_means_byparticipant, measurevar = "saccade_to_nonsingleton", betweenvars = "condition", withinvars = c("dType"), idvar = "sub", na.rm = T) %>%
+  rename(proportionSaccades = saccade_to_nonsingleton) %>%
+  mutate(stimType = "Nonsingleton")%>%
+  select(-ends_with("Normed"))
+
+# collapse together
+saccadeData_means_bycondition <- bind_rows(targetmeans, singletonmeans, nonsingletonmeans) %>%
+  mutate(stimType = factor(stimType, levels = c("Target","Nonsingleton","Singleton")))
+
+saccadePlotDataParticipants <- gather(saccadeData_means_byparticipant, key = "stimType", value = "proportionSaccades", starts_with("saccade_to")) %>%
+  mutate(stimType = case_when(stimType == "saccade_to_target" ~ "Target",
+                              stimType == "saccade_to_nonsingleton" ~ "Nonsingleton",
+                              stimType == "saccade_to_singleton" ~ "Singleton",
+                              TRUE ~ ""))
+
+captureData_means_byparticipant <- saccadeData_means_byparticipant %>%
+  filter(dType != "Absent") %>%
+  mutate(Capture = saccade_to_singleton - saccade_to_nonsingleton)
+  
+captureMeans <- summarySEwithin2(captureData_means_byparticipant, measurevar = "Capture", betweenvars = "condition", withinvars = "dType", idvar = "sub") %>%
+  select(-ends_with("Normed"))
+```
+
+```{r First Saccade Direction - Plot, echo = FALSE}
+saccadePlot_singleton <- saccadeData_means_bycondition %>%
+  filter(condition == "Singleton Search", dType != "Absent") %>%
+  ggplot(aes(group = dType, y = proportionSaccades, fill = dType, x = stimType, shape = dType, colour = dType)) +
+  geom_line(aes(linetype = dType, colour = dType), na.rm = T, size = .5, position = position_dodge(width = .6)) +
+  geom_point(aes(group = dType, y = proportionSaccades, x = stimType), na.rm = T, size = 1.5, alpha = .3, stroke = F, data = filter(saccadePlotDataParticipants, condition == "Singleton Search", dType != "Absent"), position = position_jitterdodge(dodge.width = .6, jitter.width = .2)) +
+  geom_errorbar(aes(ymin = proportionSaccades-se, ymax = proportionSaccades+se), na.rm = T, linetype = "solid", position = position_dodge(width = .6, preserve = "total"), show.legend = FALSE, colour = "black", width = .3) +
+  geom_point(na.rm = T, size = 3, position = position_dodge(width = .6), colour = "black") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(0,.8)) +
+  scale_linetype_manual(name = "Trial Type", values = c("solid", "longdash", "dotdash"), guide = guide_legend(), labels = c("High-reward", "Low-reward")) +
+  scale_fill_manual(name = "Trial Type", values = vmacCols, labels = c("High-reward", "Low-reward")) +
+  scale_colour_manual(name = "Trial Type", values = vmacCols, labels = c("High-reward", "Low-reward")) +
+  scale_shape_manual(name = "Trial Type", guide = guide_legend(), values = c(21,22,23), labels = c("High-reward", "Low-reward")) +
+  ylab("% First Saccades") + xlab("Stimulus Type") + labs(tag = "A", title = "Singleton Search") +
+  my_theme
+
+saccadePlot_feature <- saccadeData_means_bycondition %>%
+  filter(condition == "Feature Search", dType != "Absent") %>%
+  ggplot(aes(group = dType, y = proportionSaccades, fill = dType, x = stimType, shape = dType, colour = dType)) +
+  geom_line(aes(linetype = dType, colour = dType), na.rm = T, size = .5, position = position_dodge(width = .6)) +
+  geom_point(aes(group = dType, y = proportionSaccades, x = stimType), na.rm = T, size = 1.5, alpha = .3, stroke = F, data = filter(saccadePlotDataParticipants, condition == "Feature Search", dType != "Absent"), position = position_jitterdodge(dodge.width = .6, jitter.width = .2)) +
+  geom_errorbar(aes(ymin = proportionSaccades-se, ymax = proportionSaccades+se), na.rm = T, linetype = "solid", position = position_dodge(width = .6, preserve = "total"), show.legend = FALSE, colour = "black", width = .3) +
+  geom_point(na.rm = T, size = 3, position = position_dodge(width = .6), colour = "black") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(0,.8)) +
+  scale_linetype_manual(name = "Distractor Type", values = c("solid", "longdash", "dotdash"), guide = guide_legend()) +
+  scale_fill_manual(name = "Distractor Type", values = vmacCols) +
+  scale_colour_manual(name = "Distractor Type", values = vmacCols) +
+  scale_shape_manual(name = "Distractor Type", guide = guide_legend(), values = c(21,22,23)) +
+  ylab("% First Saccades") + xlab("Stimulus Type") + labs(tag = "C", title = "Feature Search") +
+  my_theme
+
+legend_saccade <- get_legend(saccadePlot_singleton + theme(legend.position = "bottom",
+                                                           legend.title = element_text(size = 14),
+                                                           legend.text = element_text(size = 14),
+                                                           legend.key.width = unit(24, 'pt')))
+ 
+
+## Capture Bar Plots
+captureBarPlot_singleton <- captureMeans %>%
+  filter(condition == "Singleton Search") %>%
+  mutate(annotation = c("***", " ")) %>%
+  ggplot(aes(x = dType, y = Capture, fill = dType)) +
+  annotate(geom = "text", label = "Capture", x = 2.85, y = .15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "text", label = "Suppression", x = 2.85, y = -.15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "segment", x = 2.65, xend = 2.65, y = -.03, yend = -.27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  annotate(geom = "segment", x = 2.65, xend = 2.65, y = .03, yend = .27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  geom_col(position = position_dodge(.9), size = .3) +
+  geom_hline(yintercept = 0, color = "black", size = .5) +
+  geom_errorbar(aes(ymax = Capture + se, ymin = Capture - se), position = position_dodge(.9), width = .1) +
+  geom_text(aes(label = annotation), nudge_y = .05) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(-.3001, .3001)) +
+  scale_x_discrete(labels = c("High\nreward", "Low\nreward")) +
+  coord_cartesian(xlim = c(1,2),
+                  clip = 'off') +
+  scale_fill_manual(name = "Distractor Type", values = vmacCols, guide = guide_legend()) +
+  ylab("Capture Score") + xlab("Trial Type") + labs(tag = "B") +
+  my_theme 
+
+captureBarPlot_feature <- 
+  captureMeans %>%
+  filter(condition == "Feature Search") %>%
+  mutate(annotation = c("***", "*")) %>%
+  ggplot(aes(x = dType, y = Capture, fill = dType)) +
+  annotate(geom = "text", label = "Capture", x = 2.85, y = .15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "text", label = "Suppression", x = 2.85, y = -.15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "segment", x = 2.65, xend = 2.65, y = -.03, yend = -.27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  annotate(geom = "segment", x = 2.65, xend = 2.65, y = .03, yend = .27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  geom_col(position = position_dodge(.9), size = .3) + 
+  geom_hline(yintercept = 0, size = .5) +
+  geom_errorbar(aes(ymax = Capture + se, ymin = Capture - se), position = position_dodge(.9), width = .1) +
+  geom_text(aes(label = annotation), nudge_y = c(.05, .07)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(-.3001, .3001)) +
+  scale_x_discrete(labels = c("High\nreward", "Low\nreward")) +
+  coord_cartesian(xlim = c(1,2),
+                  clip = 'off') +
+  scale_fill_manual(name = "Distractor Type", values = vmacCols, guide = guide_legend()) +
+  ylab("Capture Score") + xlab("Trial Type") + labs(tag = "D") +
+  my_theme
+
+saccadePlot_ms_row1 <- saccadePlot_singleton + captureBarPlot_singleton + plot_spacer() + plot_layout(nrow = 1, widths = c(2,1,.1))
+
+saccadePlot_ms_row2 <- saccadePlot_feature + captureBarPlot_feature + plot_spacer() + plot_layout(nrow = 1, widths = c(2,1,.1))
+
+saccadePlot_ms <- saccadePlot_ms_row1 / legend_saccade / saccadePlot_ms_row2 + plot_layout(heights = c(1,.1,1))
+
+save_plot(here("analysis", "figures", "saccade_plot.png"), saccadePlot_ms, ncol = 2, nrow = 2, type = "cairo", base_aspect_ratio = .9, dpi = 300)
+
+saccadePlot_ms
+```
+
+
+```{r First Saccade Direction - Capture ANOVA}
+capture.ANOVA <- aov_car(Capture ~ condition*dType + Error(sub/dType), data = captureData_means_byparticipant,  anova_table = list(es="pes"))
+
+capture.ANOVA
+
+# Bayes Factor for interaction contrast
+captureData_wide <- captureData_means_byparticipant %>%
+  select(sub, condition, dType, Capture) %>%
+  spread(dType, Capture) %>%
+  mutate(vmac = High - Low)
+
+capture_bayes <- ttestBF(x = captureData_wide$vmac[captureData_wide$condition == "Singleton Search"], 
+                         y = captureData_wide$vmac[captureData_wide$condition == "Feature Search"])
+
+1/capture_bayes
+
+```
+
+```{r First Saccade Direction - Planned t-tests}
+Singleton_high.ttest <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "High") %>%
+  select(Capture) %>%
+  pull() %>%
+  t.test()
+
+Singleton_high.es <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "High") %>%
+  select(Capture) %>%
+  summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = mean_capture/sd_capture) %>%
+  pull(d_z)
+
+Singleton_low.ttest <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "Low") %>%
+  select(Capture) %>%
+  pull() %>%
+  t.test()
+
+Singleton_low.es <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "Low") %>%
+  select(Capture) %>%
+  summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = mean_capture/sd_capture) %>%
+  pull(d_z)
+
+Feature_high.ttest <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "High") %>%
+  select(Capture) %>%
+  pull() %>%
+  t.test()
+
+Feature_high.es <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "High") %>%
+  select(Capture) %>%
+  summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = mean_capture/sd_capture) %>%
+  pull(d_z)
+
+Feature_low.ttest <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "Low") %>%
+  select(Capture) %>%
+  pull() %>%
+  t.test()
+
+Feature_low.ttest$statistic <- Feature_low.ttest$statistic*-1 # just making the t value positive for reporting in the manuscript
+
+Feature_low.es <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "Low") %>%
+  select(Capture) %>%
+  summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = abs(mean_capture/sd_capture)) %>%
+  pull(d_z)
+```
 
