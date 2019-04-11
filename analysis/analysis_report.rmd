@@ -17,6 +17,274 @@ library(here)
 library(patchwork)
 library(cowplot)
 library(BayesFactor)
+library(hrbrthemes)
+library(ggsignif)
+
+vmacCols <- vmac_pal()
+my_theme <- theme_ipsum_rc(grid = F, axis_title_just = "c", axis_title_size = 14, axis_text_size = 12, strip_text_size = 14, plot_title_size = 14, subtitle_size = 14, ticks = T) +
+  theme(legend.position = "none", 
+        plot.margin = margin(.5,1,.5,1,"cm"),
+        axis.line = element_line(colour = "black", size = .5),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_line(colour = "black", size = .5),
+        #aspect.ratio = 1.1,
+        plot.tag = element_text(size = 20, family = font_rc),
+        axis.title = element_text(margin = margin(12,1,1,1, unit = "cm")),
+        axis.text.x = element_text(margin = margin(t = 4, unit = 'pt'), colour = 'black'),
+        axis.text.y = element_text(margin = margin(r = 4, unit = 'pt'), colour = 'black'),
+        axis.title.x = element_text(margin = margin(t = 8, unit = 'pt')),
+        axis.title.y = element_text(margin = margin(r = 8, unit = 'pt')),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 14))
+
+```
+
+# Behavioural Analysis
+
+```{r Load Behavioural Data, include=FALSE}
+files <- dir(path = here::here("analysis", "data", "raw_data", "BehavData"), pattern = "*.mat")
+
+filedata <- here::here("analysis", "data", "raw_data", "BehavData", files) %>%
+  map(readMat) %>%
+  map("DATA")
+```
+
+```{r Tidy Behavioural Data, include = FALSE}
+#This is some messy code that lets us tidy the exptTrialInfo data from the nested .mat struct files
+
+subNums <- filedata %>%
+  map(1) %>%
+  flatten() %>%
+  map_dbl(1)
+
+exptdata <- filedata %>%
+  map(24) %>%
+  map(2) %>%
+  modify(as.data.frame)
+  
+counterbals <- filedata %>%
+  map(2) %>%
+  flatten() %>%
+  map_dbl(1)
+
+ages <- filedata %>%
+  map(10) %>%
+  flatten() %>%
+  map_dbl(1)
+
+ages_summ <- ages %>%
+  tibble() %>% 
+  rename("age" = ".")%>%
+  summarise(m = mean(age, na.rm = T), stdev = sd(age))
+
+bonuses <- filedata %>%
+  map(17) %>%
+  flatten() %>% 
+  map_dbl(1)
+
+bonuses_sum <- bonuses %>%
+  tibble() %>% 
+  rename("bonus" = ".") %>%
+  summarise(m = mean(bonus, na.rm = T), stdev = sd(bonus))
+
+genders <- filedata %>%
+  map(11) %>%
+  flatten()  %>%
+  map_chr(1) %>%
+  tolower()
+
+genders_summ <- genders %>%
+  as.factor() %>% 
+  tibble() %>% 
+  rename("gender" = ".") %>%
+  count(gender)
+
+exptdata <- Map(cbind, exptdata, sub = subNums, counterbal = counterbals, age = ages, gender = genders) %>%
+  bind_rows()
+
+colnames(exptdata)[1:24] <- c("block", "trial", "trialCounter", "trials_since_break", "targetLoc", "targetType", "distractLoc", "distractShape", "distractType", "fixationTime", "fixationPropGoodSamples", "fixationTimeout", "trialPropGoodSamples", "timeout", "softTimeoutTrial", "omissionTrial", "rt", "trialPay", "sessionPay", paste("timeOnLoc", c(1:5))) 
+
+exptdata <- exptdata %>%
+  mutate(condition = if_else(counterbal %in% c(1,2), "Singleton Search", "Feature Search")) 
+
+exptdata <- exptdata %>% 
+  mutate(gender = tolower(gender)) %>% 
+  mutate(dType = factor(distractType, levels = c(1,2,3), labels = c("High", "Low", "Absent")))
+```
+
+```{r Remove participants with poor gaze data}
+propCutoff <- .5
+allTracks <- exptdata %>%
+  group_by(sub) %>%
+  summarise(fixationProp = mean(fixationPropGoodSamples),
+            trialProp = mean(trialPropGoodSamples)) 
+
+poortracks <- allTracks %>%
+  filter(fixationProp < propCutoff | trialProp < propCutoff)
+
+allTracks <- allTracks %>%
+  filter(!sub %in% poortracks$sub)
+
+allTracks_summ <- allTracks %>%
+  summarise(mean_fixation_prop = round(mean(fixationProp)*100, 1), sd_fixation_prop = round(sd(fixationProp)*100, 1), mean_trial_prop = round(mean(trialProp)*100, 1), sd_trial_prop = round(sd(trialProp)*100,1))
+
+exptdata <- exptdata %>%
+ filter(!sub %in% poortracks$sub)
+```
+
+We removed data for any participants who did not have sufficient quality gaze data. If participants have an average of less than `r propCutoff*100`% valid gaze data during the fixation period or during a trial, they are removed from the data set.
+
+`r length(poortracks)` participants were removed due to having a poor track.
+
+```{r Remove participants for any other reasons}
+
+remove_p_numbers <- c(37)
+
+#  check to make sure that everyone has completed the full 480 trials
+didNotComplete <- exptdata %>%
+  group_by(sub) %>%
+  filter(block > 0) %>%
+  tally() %>%
+  filter(n < 480) %>%
+  select(sub)
+
+# remove those that did not complete the full expt
+remove_p_numbers <- c(remove_p_numbers, didNotComplete$sub)
+
+exptdata <- exptdata %>%
+  filter(!sub %in% remove_p_numbers)
+```
+
+`r length(remove_p_numbers)` participants were removed for other reasons (participant #37 they thought that they needed to look at the coloured circle in order to earn rewards, participant #26 and #85 did not complete the experiment due to difficulty tracking their eyes).
+
+Then we remove the first two trials of the experiment, the first two trials after breaks, and timeouts from the data (in line with previous VMAC analysis protocols):
+
+```{r Additional data exclusions}
+# first we determine the percentage of trials that were timeouts (for reporting in the MS)
+hardtimeouts <- exptdata %>%
+  group_by(timeout) %>%
+  summarise(n = n()) %>%
+  mutate(perc = round(n/sum(n)*100, 1))
+
+exptdata <- exptdata %>%
+  filter(trial > 2 & trials_since_break > 2) %>% #removing first two trials and trials after breaks
+  filter(timeout != 1) # removing timeouts
+```
+
+## Omission Trials
+```{r Omission Trial Means}
+exptdata_means_byparticipant <- exptdata %>%
+  ungroup() %>%
+  group_by(sub, condition, dType) %>%
+  summarise(m = mean(omissionTrial))
+
+exptdata_means_bycondition <- summarySEwithin2(data = exptdata_means_byparticipant, measurevar = "m", betweenvars = "condition", withinvars = "dType", idvar = "sub") %>%
+  select(-ends_with("Normed"))
+```
+
+
+```{r Omission Trial Graph}
+
+
+omissionPlot_singleton <- exptdata %>%
+  filter(condition == "Singleton Search") %>%
+  group_by(sub, dType) %>%
+  summarise(m = mean(omissionTrial)) %>%
+  ggplot(aes(x = dType, y = m, fill = dType, shape = dType)) +
+  geom_errorbar(data = filter(exptdata_means_bycondition, condition == "Singleton Search"), aes(x = dType, y = m, ymin = m-se, ymax = m+se), colour = "black", width = .15) +
+  geom_line(aes(group = sub), colour = "black", alpha = .1, linetype = "solid", size = .5) +
+  geom_line(data = filter(exptdata_means_bycondition, condition == "Singleton Search"), aes(x = dType, y = m, group = 1), colour = "black") + 
+  geom_point(data = filter(exptdata_means_bycondition, condition == "Singleton Search"), aes(x = dType, y = m), colour = "black", size = 3) +
+  geom_signif(comparisons = list(c("High", "Low"), c("Low", "Absent")), annotations = c("***","*"), y_position = c(.61,.57), colour = "black", tip_length = 0) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(0,.8)) +
+  scale_x_discrete(labels = c("High\nreward", "Low\nreward", "Distractor\nabsent")) +
+  scale_fill_manual(values = vmacCols) +
+  scale_colour_manual(values = vmacCols) +
+  scale_shape_manual(name = "Trial Type", guide = guide_legend(), values = c(21,22,23)) +
+  labs(y = "% Reward Omissions", x = "Trial Type", tag = "A", title = "Singleton Search") +
+  my_theme
+
+omissionPlot_feature <- 
+  exptdata %>%
+  filter(condition == "Feature Search") %>%
+  group_by(sub, dType) %>%
+  summarise(m = mean(omissionTrial)) %>%
+  ggplot(aes(x = dType, y = m, fill = dType, shape = dType)) +
+  geom_line(aes(group = sub), colour = "black", alpha = .1, linetype = "solid", size = .5) +
+  geom_errorbar(data = filter(exptdata_means_bycondition, condition == "Feature Search"), aes(x = dType, y = m, ymin = m-se, ymax = m+se), colour = "black", width = .15) +
+  geom_line(data = filter(exptdata_means_bycondition, condition == "Feature Search"), aes(x = dType, y = m, group = 1), colour = "black") + 
+  geom_point(data = filter(exptdata_means_bycondition, condition == "Feature Search"), aes(x = dType, y = m), colour = "black", size = 3) +
+  geom_signif(comparisons = list(c("High", "Low"), c("Low", "Absent")), annotations = c("***","***"), y_position = c(.61,.57), colour = "black", tip_length = 0) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(0,.8)) +
+  scale_x_discrete(labels = c("High\nreward", "Low\nreward", "Distractor\nabsent")) +
+  scale_fill_manual(values = vmacCols) +
+  scale_shape_manual(name = "Distractor Type", guide = guide_legend(), values = c(21,22,23)) +
+  labs(y = "% Reward Omissions", x = "Trial Type", tag = "B", title = "Feature Search") +
+  my_theme
+
+omissionPlot_ms <- omissionPlot_singleton / omissionPlot_feature
+
+save_plot(here::here("analysis", "figures", "omission_plot.png"), omissionPlot_ms, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
+
+omissionPlot_ms
+
+```
+
+### Effect of Reward
+Effect of reward ANOVA:
+```{r Effect of Reward - Omissions}
+omissions_vmac.ANOVA <- aov_car(m ~ condition*dType + Error(sub/dType), data = filter(exptdata_means_byparticipant, dType != "Absent"), anova_table = list(es="pes"))
+```
+Significant main effect of reward (indicating VMAC effect), but no interaction with or main effect of search condition.
+
+Planned t-tests:
+```{r Effect of Reward - Omissions - Planned t-tests}
+singleton_high_omissions <- exptdata_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "High") %>%
+  select(m) %>%
+  pull()
+
+singleton_low_omissions <-  exptdata_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "Low") %>%
+  select(m) %>%
+  pull()
+
+feature_high_omissions <- exptdata_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "High") %>%
+  select(m) %>%
+  pull()
+
+feature_low_omissions <-  exptdata_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "Low") %>%
+  select(m) %>%
+  pull()
+
+singleton_VMAC_omissions.ttest <- t.test(singleton_high_omissions, singleton_low_omissions, paired = T)
+singleton_VMAC_omissions.es <- dz_calculator(singleton_high_omissions, singleton_low_omissions)
+feature_VMAC_omissions.ttest <- t.test(feature_high_omissions, feature_low_omissions, paired = T)
+feature_VMAC_omissions.es <- dz_calculator(feature_high_omissions, feature_low_omissions)
+
+vmac_singleton <- exptdata_means_byparticipant %>%
+  filter(dType != "Absent", condition == "Singleton Search") %>%
+  spread(dType, m) %>%
+  mutate(vmac = High - Low) %>%
+  pull(vmac)
+
+vmac_feature <- exptdata_means_byparticipant %>%
+  filter(dType != "Absent", condition == "Feature Search") %>%
+  spread(dType, m) %>%
+  mutate(vmac = High - Low) %>%
+  pull
+
+vmac_condition_bayes <- ttestBF(x = vmac_singleton, y = vmac_feature)
 ```
 
 
