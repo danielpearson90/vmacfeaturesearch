@@ -1,7 +1,7 @@
 Package: vmacfeaturesearch
 Title: Research Compendium for VMAC Feature Search Project
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R:
     person(given = "Daniel",
            family = "Pearson",
            role = c("aut", "cre"),
@@ -13,3 +13,4 @@ Encoding: UTF-8
 LazyData: true
 URL: https://github.com/danielpearson90/vmacfeaturesearch
 BugReports: https://github.com/danielpearson90/vmacfeaturesearch/issues
+Imports: bookdown
