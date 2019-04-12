@@ -589,3 +589,92 @@ Feature_low.es <- captureData_means_byparticipant %>%
   pull(d_z)
 ```
 
+## Development of suppression/capture effect across blocks
+
+```{r Block Analysis Data Tidying}
+saccadeData_means_byparticipant_byblock <- 
+  saccadedata %>%
+  mutate(sub = as.factor(sub), newblock = ceiling(as.numeric(block)/2)) %>%
+  group_by(sub, condition, dType, newblock) %>%
+  summarise(saccade_to_target = mean(saccade_to_target, na.rm = T),
+            saccade_to_singleton = mean(saccade_to_singleton, na.rm = T),
+            saccade_to_nonsingleton = mean(saccade_to_nonsingleton, na.rm = T)/mean(num_nonsingletons, na.rm = T),
+            num_nonsingletons = mean(num_nonsingletons, na.rm = T),
+            capture = saccade_to_singleton - saccade_to_nonsingleton) %>%
+  filter(dType != "Absent")
+
+capturemeans_byblock <- summarySEwithin2(data = saccadeData_means_byparticipant_byblock, measurevar = "capture", betweenvars = "condition", withinvars = c("dType", "newblock"), idvar = "sub", na.rm = T) %>%
+  select(-ends_with("Normed"))
+```
+
+```{r Block Analysis Graph}
+capturePlot_byblock_singleton <- 
+  capturemeans_byblock %>%
+  filter(condition == "Singleton Search") %>%
+  ggplot(aes(x = newblock, y = capture, group = dType, shape = dType, colour = dType)) +
+  #geom_rect(fill = "#D3D3D3", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, alpha = .3, inherit.aes = F) +
+  geom_hline(yintercept = 0, colour = "black", size = .5, linetype = "dotted") +
+  annotate(geom = "text", label = "Capture", x = 4.7, y = .15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "text", label = "Suppression", x = 4.7, y = -.15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "segment", x = 4.5, xend = 4.5, y = -.03, yend = -.27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  annotate(geom = "segment", x = 4.5, xend = 4.5, y = .03, yend = .27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  geom_line(aes(linetype = dType), size = .5) +
+  geom_errorbar(aes(ymin = capture - se, ymax = capture + se), width = .1, colour = "black") +
+  geom_point(aes(shape = dType, fill = dType), size = 3, colour = "black") +
+  scale_shape_manual(name = "Distractor Type", guide = guide_legend(), values = c(21,22)) +
+  scale_fill_manual(name = "Distractor Type", values = vmacCols, guide = guide_legend()) +
+  scale_colour_manual(name = "Distractor Type", values = vmacCols, guide = guide_legend()) +
+  scale_y_continuous(expand = c(0,0), limits = c(-.3,.301), breaks = seq(-.3, .3, .1), labels = scales::percent_format(accuracy = 1)) +
+  scale_x_discrete() +
+  coord_cartesian(xlim = c(1,4),
+                  clip = 'off') +
+  scale_linetype_manual(name = "Distractor Type", values = c("solid", "longdash"), guide = guide_legend()) +
+  ylab("Capture Score") + xlab("Epoch (96 trials)") + labs(tag = "A", title = 'Singleton Search') +
+  my_theme
+
+capturePlot_byblock_feature <- 
+  capturemeans_byblock %>%
+  filter(condition == "Feature Search") %>%
+  ggplot(aes(x = newblock, y = capture, group = dType, shape = dType, colour = dType)) +
+  geom_hline(yintercept = 0, colour = "black", size = .5, linetype = "dotted") +
+  annotate(geom = "text", label = "Capture", x = 4.7, y = .15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "text", label = "Suppression", x = 4.7, y = -.15, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "segment", x = 4.5, xend = 4.5, y = -.03, yend = -.27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  annotate(geom = "segment", x = 4.5, xend = 4.5, y = .03, yend = .27, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  geom_line(aes(linetype = dType), size = .5) +
+  geom_errorbar(aes(ymin = capture - se, ymax = capture + se), width = .1, colour = "black") +
+  geom_point(aes(shape = dType, fill = dType), size = 3, colour = "black") +
+  scale_shape_manual(name = "Distractor Type", guide = guide_legend(), values = c(21,22)) +
+  scale_fill_manual(name = "Distractor Type", values = vmacCols, guide = guide_legend()) +
+  scale_colour_manual(name = "Distractor Type", values = vmacCols, guide = guide_legend()) +
+  scale_y_continuous(expand = c(0,0), limits = c(-.3,.301), breaks = seq(-.3, .3, .1), labels = scales::percent_format(accuracy = 1)) +
+  scale_x_discrete() +
+  coord_cartesian(xlim = c(1,4),
+                  clip = 'off') +
+  scale_linetype_manual(name = "Distractor Type", values = c("solid", "longdash"), guide = guide_legend()) +
+  ylab("Capture Score") + xlab("Epoch (96 trials)") + labs(tag = "B", title = 'Feature Search') +
+  my_theme
+
+capturePlot_byblock_vert <- (capturePlot_byblock_singleton + plot_spacer() + plot_layout(widths = c(1,.1))) / legend_saccade / (capturePlot_byblock_feature + plot_spacer() + plot_layout(widths = c(1,.1))) + plot_layout(heights = c(1,.1,1))
+
+capturePlot_byblock_vert
+
+save_plot(here("analysis", "figures","capture_plot_by_block.png"), capturePlot_byblock_vert, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
+
+
+```
+
+```{r Block Analysis Statistics}
+capture_byblock.ANOVA <- aov_car(capture ~ newblock*dType*condition + Error(sub/newblock*dType), data = saccadeData_means_byparticipant_byblock, anova_table = list(es="pes"))
+
+capture_byblock.ANOVA
+
+ref_all <- lsmeans(capture_byblock.ANOVA, ~newblock | dType)
+
+capture_byblock.polys <- summary(contrast(ref_all, method = "poly")) %>%
+  mutate(t.ratio = abs(t.ratio),
+         df = round(df, digits = 0))
+
+capture_byblock.polys
+```
+
