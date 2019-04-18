@@ -1,85 +1,214 @@
 ---
-title: "Title Goes Here"
-author:
-  - Author One
-  - Author Two
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: 
-    bookdown::html_document2:
-      fig_caption: yes
-      reference_docx: "../templates/template.docx" # Insert path for the DOCX file
-bibliography: references.bib
-csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
+title             : "Overt attentional capture by reward-related stimuli overcomes top-down suppression"
+shorttitle        : "Reward overcomes attentional suppression"
+
+author: 
+  - name          : "Daniel Pearson"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "School of Psychology, University of New South Wales, UNSW Sydney NSW 2052, Australia"
+    email         : "d.pearson@unsw.edu.au"
+  - name          : "Poppy Watson"
+    affiliation   : "1"
+  - name          : "Phillip Cheng"
+    affiliation   : "2"
+  - name          : "Mike E. Le Pelley"
+    affiliation   : "1"
+
+affiliation:
+  - id            : "1"
+    institution   : "School of Psychology, UNSW Sydney"
+  - id            : "2"
+    institution   : "Department of Psychology, Macquarie University"
+
+authornote: |
+  **Conflict of interest:** The authors declare no conflict of interest.
+  
+  **Funding:** This research was supported by Australian Research Council grant DP170101715. Daniel Pearson was supported by an Australian Government Research Training Program Scholarship.
+
 abstract: |
-  Text of abstract
-keywords: |
-  keyword 1; keyword 2; keyword 3
-highlights: |
-  These are the highlights. 
+  Salient-but-irrelevant distractors can automatically capture attention and eye-gaze in visual search. However, recent findings have suggested that attention to salient-but-irrelevant stimuli can be suppressed when observers use a specific target template to guide their search (i.e., feature search). Increasingly, evidence suggests that attentional selection is influenced by factors other than the physical salience of a stimulus and the observer’s goals. For instance, pairing a stimulus with reward has been shown to increase the extent to which it captures attention and gaze (as though it has become more physically salient), even when such capture has negative consequences for the observer. We investigated whether capture by reward can be suppressed in the same way as capture by physical salience using eye-tracking with a rewarded visual search task. When participants were encouraged to use feature search, attention to a distractor paired with relatively small reward was suppressed. By contrast, attention was captured by a distractor paired with large reward, even when such capture resulted in the loss of large reward. These findings suggest that reward-related stimuli are given special priority to the visual attention system and have implications for our understanding of real-world biases to reward-related stimuli, such as those seen in addiction.
+  
+keywords          : "attentional capture, reward, suppression, cognitive control"
+wordcount         : "6656"
+
+bibliography      : ["r-references.bib", "mendeley.bib"]
+
+floatsintext      : yes
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : no
+mask              : no
+draft             : no
+
+header-includes:
+  - \raggedbottom
+
+documentclass     : "apa6"
+classoption       : "jou, a4paper, noextraspace"
+output            : papaja::apa6_pdf
+nocite: |
+ 
+
+
 ---
 
+```{r setup, include = FALSE}
+library("papaja")
+library(here)
+load(here::here("analysis", "data", "completed_analysis.rda"))
+# source(here("Analysis Programs", "Figures", "manuscript_figs.r"))
+# use this to allow custom decimal places later on
+op = function(x, d=2) sprintf(paste0("%1.",d,"f"), x) 
+```
 
-<!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
-
-```{r, setup, echo = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  warning = FALSE,
-  message = FALSE,
-  echo = FALSE,
-  comment = "#>",
-  fig.path = "../figures/"
-)
-
-library(vmacfeaturesearch) # Or use devtools::load_all('.', quiet = T) if your code is in script files, rather than as functions in the `/R` diretory
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
 ```
 
 # Introduction
+When we interact with the world, our visual attention system can prioritise important information. For example, when driving towards an intersection, we can selectively attend to a stop sign on a busy street. Sometimes, however, we may find that stimuli that are irrelevant to our current task may nevertheless capture our attention in a seemingly automatic and involuntary way (e.g., a flashing alert, or colourful billboard). Consistent with this framework, an influential view of attentional selection has drawn a distinction between two forms of attentional control: one that is volitional and goal directed (top-down control) and another that is automatic and stimulus driven [@Yantis2000]. However, exactly how these two processes interact has been the subject of extensive debate.
 
-Here is a citation [@Marwick2017]
+Most models of attentional selection can be categorised into one of two opposing theoretical positions. *Stimulus-driven* accounts argue that attention is initially captured by the most salient stimulus presented to an observer, regardless of their current goals [@Theeuwes2010; @Theeuwes1992]. That is, individuals have no voluntary control over the initial allocation of their attention, which is automatically drawn to the most salient stimulus in a scene. By contrast, *goal-directed* accounts posit that attention is allocated only to stimuli that are in some way related to the observer's current goals [@Folk1992; @Leber2006]. These theories predict that physically salient stimuli will be completely ignored by the visual attention system, unless they share some feature(s) with the observer's template of expected targets.
 
-# Background
 
-```{r demo, eval = FALSE}
-1 + 1
-```
+
+Recently, a hybrid model of attentional selection has been proposed---the *signal suppression hypothesis* [@Gaspelin2018; @Sawaki2010]---which attempts to integrate these two competing accounts. According to this model, salient stimuli automatically generate an attentional priority signal (or "attend-to-me" signal) that will go on to capture attention unless it is suppressed by a top-down control process, which builds over repeated experience with the salient stimulus [@Gaspelin2018b]. This account is consistent with stimulus-driven theories, in that it proposes that physically salient stimuli have the potential to involuntarily capture attention; however it is also consistent with goal-directed theories in that it proposes that there is some top-down control of the allocation of attention. Evidence supporting the signal suppression hypothesis has largely come from the event-related potential (ERP) literature [for review, see @Gaspelin2018a], however recent studies have demonstrated behavioural evidence of suppression in the context of overt attention [i.e., eye-movements: see @Gaspelin2016; @Gaspelin2018b; @Ipata2006] and covert attention [i.e., shifts of attention that are not accompanied by eye-movements: see @Gaspelin2015].
+
+For example, across two experiments @Gaspelin2016 had participants perform variants of a commonly used  procedure for examining attentional capture---the *additional singleton task* [@Theeuwes1991a; @Theeuwes1992]---while recording eye movements. Eye movements provide a useful index of attention since an eye movement to a location (a saccade) is necessarily preceded by a shift of spatial attention to that location [@Deubel1996]. In this task, participants were required to locate and respond to a shape-singleton target that was presented in an array of non-target shapes. On half of the trials, one of the non-target shapes was rendered in a different colour from the rest of the array so as to be a physically salient colour-singleton distractor. If participants were *more* likely to make a saccade towards the singleton distractor than one of the nonsingleton non-targets, this would indicate that the singleton distractor had captured attention. By contrast, if participants were *less* likely to make a saccade to the singleton distractor than one of the nonsingleton non-targets, this would suggest that attention to the singleton distractor had been suppressed. In @Gaspelin2016\'s Experiment 1, participants were encouraged to adopt a strategy of searching for the "odd-one-out" in the display [i.e, *singleton-search mode*; @Bacon1994], by having the target be randomly either a circle amongst diamonds or a diamond amongst circles on each trial (see Figure \@ref(fig:methodFig)A for an example from the current study). Under these conditions, both stimulus-driven [@Theeuwes1992] and goal-directed [@Bacon1994] accounts of attentional selection would predict capture, as the template that participants use to locate the target (i.e., any singleton) is broad enough to include the singleton distractor. As expected, under these singleton-search conditions Gaspelin et al. found that participants' overt attention was captured by the salient singleton. In Experiment 2, participants were instead encouraged to adopt a more specific target template [i.e., *feature-search mode*; @Bacon1994], by consistently mapping the target identity to one shape (e.g., search for a circle on every trial), and having a heterogeneous set of shapes act as the non-targets (see Figure \@ref(fig:methodFig)B). This manipulation makes searching for any singleton a highly inefficient strategy, as there are multiple singleton nontargets in the display (e.g., a circle, a square, a triangle, and a red shape). Thus, participants should be encouraged to search for the specific features that define the target (i.e., the "circleness" of the circle). Under these conditions, attention to the salient colour-singleton distractor was suppressed relative to the other non-targets, suggesting that it was treated differently from the other non-targets (inconsistent with goal-directed accounts), yet did not capture gaze (inconsistent with stimulus-driven accounts). By contrast, the signal suppression hypothesis can account for these findings by suggesting that the singleton generated an attentional priority signal as a consequence of its physical salience, but this signal could be suppressed by top-down control under conditions that promote a more specific search strategy (i.e., feature search). Importantly, this suppression effect was observed even for the most rapidly generated eye movements, which was taken as evidence that the suppression effect operates early in processing, before attention is initially allocated.
+
+## The role of selection history in guiding attention
+Up to this point we have discussed the set of influences on attentional control as a dichotomy: goal-directed versus stimulus-driven. However, a growing literature has questioned this framework, pointing to demonstrations of attentional selection biases that fall outside this dichotomy [@Awh2012; @LePelleya; @Failing2018]. @Awh2012 suggested a third category of influences on attentional selection, labelled *selection history*. This category describes attentional biases that are formed through learned relationships between stimulus features and motivationally significant outcomes---such as reward [@Anderson2015a; @Failing2018; @LePelleya] or punishment [@Watson2019]---as well as other biases related to the history of attentional deployment that cannot be easily explained in terms of goal-directed or stimulus-driven control, such as biases for selecting stimulus features that have previously acted as targets [e.g., @Maljkovic1994].
+
+The influence of learned stimulus-reward associations on attentional capture is demonstrated in a study by Le Pelley et al. [-@LePelley2015b; see also @Pearson2015]. In a variant of the additional singleton task, participants were more likely to make a saccade towards a colour-singleton distractor signalling the availability of high reward (e.g., 10$\text{\textcent{}}$) than a singleton distractor signalling low reward (1$\text{\textcent{}}$), even though looking at the reward-signalling singletons was counterproductive, as it resulted in the omission of the reward that would otherwise have been delivered. That is, participants were more likely to have their attention and gaze captured by a distractor signalling high reward, even though this led to the omission of more high rewards. This result cannot be explained in terms of stimulus-driven influences, as the colour-reward associations were counterbalanced across participants to avoid any influence of differential physical salience on capture. Similarly, the effect cannot be explained by goal-directed influences, as capture by the reward associated distractor was directly counterproductive to participants' goal of maximizing reward. Thus, this study demonstrates that experiencing the relationship between a stimulus feature and reward influences the likelihood that that feature will capture attention and gaze, a finding termed *value-modulated attentional capture* (VMAC).
+
+Pairing a stimulus with reward is thought to increase its attentional priority in a way that mimics or otherwise interacts with its physical salience. For example, eye-tracking studies have demonstrated that VMAC is largest for the most rapidly generated saccades, and diminishes with increasing saccade latency [@Pearson2016; @Failing2015], a pattern similar to that observed in capture by physical salience [e.g., @VanZoest2004]. Similarly, electrophysiological studies have shown that reward affects ERP components thought to index low-level perceptual activity [@Hickey2010]. This is consistent with the idea of *incentive salience* [@Berridge1998], wherein a reward-related stimulus becomes more salient and attention grabbing to the observer through a change in its perceptual representation. This begs the question, if associating a stimulus with reward increases its perceptual priority as though it has become more physically salient, can this priority signal be suppressed by the top-down control process proposed by the signal suppression hypothesis? That is, can incentive salience be suppressed in the same way as physical salience? Aside from the theoretical importance of this question, it may also have important clinical implications. Recent evidence suggests that the processes underlying VMAC are closely related to the attentional biases towards drug-related stimuli observed in addiction [@Albertella2017a; @Anderson2013; for review see @Field2008], which can promote relapse in recovering addicts [@Marissen2006; @Waters2012; @Marhe2013]. Thus it is important to know whether top-down cognitive control processes can be used to overcome the influence of reward on attention when such capture is counterproductive and contrary to our goals. We addressed this question by combining Le Pelley et al.'s VMAC procedure with Gaspelin et al.'s (2017) overt attentional suppression procedure to investigate whether reward-related attentional biases can be suppressed by top-down control processes under conditions promoting feature search.
 
 # Methods
 
+## Participants
+This study was approved by the UNSW Sydney Human Research Ethics Advisory Panel (Psychology). Previous studies of VMAC using gaze measures [@LePelley2015b; @Pearson2015; @Pearson2016] have demonstrated medium to large effect sizes ($d_z$ = 0.41--1.4, mean = 0.73), and previous studies of overt attentional suppression of physical salience [@Gaspelin2016] have demonstrated a large effect size ($d_z$ = 1.6). Based on an anticipated effect size of $d$ = 0.73, a power analysis conducted with G\*Power [@Faul2007] indicated that 32 participants per group would provide adequate power (power ~.98 to detect within-subjects effects and power of ~.82 for between-subjects effects). We therefore tested 64 UNSW Sydney students ($n =$ 32 per group, `r genders_summ$n[genders_summ$gender == 'f']` females, age $M=$ `r ages_summ$m`, $SD=$ `r ages_summ$stdev`) who participated in exchange for course credit or payment of 20 AUD. All participants also received a monetary bonus that was dependent on their performance ($M =$ `r bonuses_sum$m` AUD, $SD =$ `r bonuses_sum$stdev` AUD).
+
+## Apparatus
+Participants were tested using a Tobii TX-300 eye-tracker (sampling frequency 300 Hz), mounted on a 23-inch monitor (1920 $\times$ 1080 resolution, 60 Hz refresh rate). Participants' heads were positioned in a chin rest 60 cm from the screen. Gaze data were down-sampled to 100 Hz for gaze contingent calculations during stimulus presentation, with gaze position in each sample defined as the average position during the preceding 10 ms window. Stimulus presentation was controlled by MATLAB using the Psychophysics Toolbox extensions [@Brainard1997; @Kleiner2007; @Pelli1997]. Experiment scripts, analysis scripts, and raw data are available at (**OSF**).
+
+## Stimuli
+The task was based on that used by @Gaspelin2016 and Pearson et al. [-@Pearson2015; -@Pearson2016]. Each trial consisted of a fixation display, a search display, and a feedback display (see Figure \@ref(fig:methodFig)C). All stimuli were presented on a black background. The fixation display consisted of a white cross (0.5$^\circ$ visual angle), presented in the centre of the screen and surrounded by a white circle (diameter 3.0$^\circ$). The search display consisted of four filled shapes (size 1.6$^\circ$ $\times$ 1.6$^\circ$) presented above, below, left and right of screen centre (eccentricity 4.5$^\circ$). One of the shapes was designated as the target, and the other three shapes were designated non-targets. For all participants, the target was randomly determined to be either a circle or a diamond on each trial [^1]. The identity of the non-target shapes varied by search condition. For the *singleton search* condition, the non-target stimuli were all rendered as the alternative target shape (i.e., if the target was a diamond, all of the non-targets were circles; Figure \@ref(fig:methodFig)B). For the *feature search* condition, the non-target stimuli were randomly selected without replacement from a set of two squares and two hexagons, and were never rendered as the alternative target shape (Figure \@ref(fig:methodFig)C). The target and two of the non-targets were always rendered in grey (CIE $x$,$y$ chromaticity coordinates of .327/.400). On the majority of trials, one of the non-target shapes (the *singleton distractor*) was rendered in either orange or blue (CIE $x$,$y$ coordinates .492/.445 and .192/.216, respectively). On the remaining trials, all shapes were rendered in grey such that there was no singleton distractor. The values of blue and orange had similar luminance (~24.5 cd/m^2^), which was higher than that of grey (~8.3 cd/m^2^). The feedback display showed the points earned on the current trial. If the response time (RT) exceeded the soft-timeout threshold (see below), the message "Too slow" appeared below the reward feedback.
+
+[^1]: This aspect of our design differs from that of @Gaspelin2016. In their study, for half of participants in the feature search condition the target was always a circle, and for other participants the target was always a diamond. By contrast, for the singleton search condition, for all participants the target was a circle among diamonds on some trials, and a diamond among circles on others. That is, target identity (circle/diamond) was manipulated between-subjects for the feature search condition, and within-subjects for the singleton search condition. In the current study, we equated the two conditions by varying target identity within-subjects for all participants. This ensured that any difference between the two search conditions was driven by a difference in the specificity of participants’ target template and not by a difference in participants’ history of selecting the target shape [e.g., @Maljkovic1994].
+
+```{r methodFig, fig.align='center', fig.cap = '(ref:methodFig)', out.width='100%'}
+knitr::include_graphics(here("analysis", "figures", "Methods_fig.png"), dpi = 300)
+
+```
+
+## Design
+Participants were randomly assigned to either the singleton search or feature search conditions. For half of the participants in each condition, orange was the high-reward colour and blue was the low-reward colour; these colour-reward relationships were reversed for the remaining participants. There were three types of trial: (1) *high-reward trials*, in which the singleton distractor was rendered in the high-reward colour and 500 points were available for a rapid respnse (see below); (2) *low-reward trials*, in which the singleton distractor was rendered in the low-reward colour and 10 points were available; and (3) *distractor-absent trials*, in which all non-targets were rendered in grey and 10 points were available. The experiment comprised 8 blocks of 60 trials each, for a total of 480 experimental trials. Each block consisted of 20 high-reward trials, 20 low-reward trials, and 20 distractor-absent trials, in random order. Participants took a short break between blocks.
+
+On each trial, the location of the target was determined randomly. On high-reward and low-reward trials, the location of the singleton distractor was randomly selected from the three remaining locations. A small, circular region of interest (ROI) with diameter 1.7$^\circ$ visual angle was defined around the centre of the target, with a larger ROI (diameter 2.6$^\circ$) defined around the singleton distractor. A response was registered when the participant had accumulated 100 ms of gaze dwell time within the target ROI. If any gaze was detected within the singleton ROI, the reward for the trial was not awarded (henceforth referred to as *reward omissions*). On distractor-absent trials, one of the non-target shapes was selected at random to act as the "singleton distractor" location. Any gaze falling within the ROI around this (non-salient) stimulus triggered a reward omission in the same way as on trials with a singleton distractor. Responses with RTs that were slower than the soft-timeout threshold (1000 ms) were also not rewarded. 
+ 
+## Procedure
+Participants were told that their task was to move their eyes to the target "as quickly and directly as possible" on each trial. Those in the singleton search condition were instructed to move their eyes to the "unique shape" on each trial, whereas those in the feature search condition were instructed to move their eyes to the "circle or diamond". Participants were also informed about the relationships between distractor colour and reward availability (e.g., that if an orange shape was present in the display they could 500 points, and if a blue shape was present they could win 10 points); they were not informed that looking at the reward-associated distractor would cancel the reward for the current trial. The instructions stated that they would earn 0 points if their RT was slower than the soft-timeout threshold, and that their reward also depended on how accurately they moved their eyes to the target. Participants were told that they could earn between 7 and 15 AUD for good performance, but no specific information about the conversion rate from points to AUD was provided.
+
+Each trial began with the presentation of the fixation display. Participants' gaze location was superimposed over the display as a small yellow dot. Once 700 ms of gaze time had accumulated within the circle surrounding the fixation cross, or after 5000 ms, the cross and the circle turned yellow and the dot marking the participants' gaze location disappeared. After 300 ms the screen blanked, and after a 150 ms delay the search display was presented until a response was recorded, or until 2000 ms (hard-timeout threshold) had passed. The feedback display then appeared for 2500 ms during the first block, and 1500 ms in all subsequent blocks. The inter-trial interval was 700 ms.
+
+## Data analysis
+In line with previous VMAC protocols [e.g., @LePelley2015b; @Pearson2016], data from the first two experimental trials, and the first two trials after each break were discarded. Hard timeouts (`r op(hardtimeouts$perc[hardtimeouts$timeout == 1], 1)`\% of all trials) were also discarded. One participant was replaced because their mean proportion of valid gaze samples during each trial was less than 50\%. One other participant was replaced after reporting that they had misunderstood the task instructions. For the remaining participants, valid gaze data were registered on an average of `r op(allTracks_summ$mean_trial_prop, 1)`\% ($SD=$ `r op(allTracks_summ$sd_trial_prop, 1)`\%) of samples, suggesting high fidelity of gaze data.
+
+Saccades were detected in the raw gaze data (sampled at 300 Hz) using a velocity-threshold identification algorithm [@Salvucci2000]. Saccade latency was measured as the duration from onset of the search display to the point at which eye-movement velocity exceeded 40$^\circ$/s. Following previous protocols [@Pearson2016], we excluded trials with anticipatory saccades (saccade latency <80 ms; `r op(totalSaccadeTrialsDiscarded$prop_anticipatory,1)`\% of all trials), trials in which no gaze was recorded within 100 pixels (5.1$^\circ$) of the fixation point within the first 80 ms (`r op(totalSaccadeTrialsDiscarded$prop_outside_fix, 1)`\% of trials), and trials in which there was insufficient gaze data to detect a saccade (`r op(totalSaccadeTrialsDiscarded$prop_bad_data, 1)`\% of trials). To classify the direction of the first saccade on each trial, the angular deviation between the endpoint of the saccade and each stimulus location was calculated. The saccade was defined as going in the direction of a stimulus if the angular deviation was less than $30^\circ$ to the left or right of that stimulus. 
+
+There were two primary dependent measures: (1) the percentage of reward omissions---that is, trials on which participants looked at the singleton distractor (or nonsingleton distractor randomly assigned to act as the "singleton distractor" location: see Design) and hence reward was cancelled---for high-reward, low-reward, and distractor-absent trials, and (2) the percentage of first saccades directed towards the singleton distractor versus the average nonsingleton distractor (that is, the mean across the two nonsingleton distractors present in each search display; see Figure \@ref(fig:methodFig)), on high-reward and low-reward trials.
+
+For the analysis of reward omissions, we were particularly interested in two contrasts. First, the comparison between the high-reward and low-reward trials allowed us to examine the effect of reward on attention, since both displays contained a physically salient colour-singleton distractor, with the only difference being the magnitude of reward that the distractor signalled. Second, the comparison between the low-reward and distractor-absent trials allowed us to examine the effect of physical salience on attention, since these different trial types differed in whether the display contained a colour-singleton distractor, but had the same reward magnitude available (10 points). These contrasts were compared for the singleton search and feature search conditions using 2 $\times$ 2 mixed ANOVAs.
+
+For the analysis of saccade direction, we were primarily interested in the difference between the percentage of trials on which first saccades were directed towards the singleton distractor and the mean of both nonsingleton distractors across high- and low-reward trials. These data were converted into a *capture score* by subtracting the percentage of trials where the first saccade was directed towards the average nonsingleton from the percentage of trials where the first saccade was directed towards the singleton. A positive capture score indicated that gaze was more likely to have been directed towards the singleton than the average nonsingleton (i.e., the singleton had captured overt attention), whereas a negative capture score indicated that gaze was more likely to be directed toward the average nonsingleton than the singleton (overt attention to the singleton was suppressed). A 2 $\times$ 2 mixed ANOVA was used to compare capture scores for high- and low-reward trials across search conditions. In addition to any group differences in the patterns of attentional capture and/or suppression across trial type, we were also interested in directly investigating whether attention was captured by the singleton distractor (capture score $>0$), or whether attention to the singleton was suppressed (capture score $<0$) for each trial type $\times$ search condition combination. We therefore tested the capture score for each trial type and search condition with planned one-sample *t*-tests against zero.
+
+Statistical analyses were conducted in `r cite_r()` with the afex package  [@R-afex] used to calculate ANOVAs and the emmeans package [@R-emmeans] for follow-up contrasts. Greenhouse-Geisser corrections are reported where appropriate. In cases where a conclusion is drawn on the basis of a null effect, we report the Bayes factor that corresponds to a Bayesian *t*-test using the default Cauchy prior, conducted using the BayesFactor package [@R-BayesFactor].
+
 # Results
 
-```{r get-data, eval = FALSE}
-# Note the path that we need to use to access our data files when rendering this document
-my_data <- readr::read_csv(here::here('analysis', 'data', 'raw_data', 'my_csv_file.csv'))
+## Reward Omissions
+Figure \@ref(fig:OmissionPlot) displays the percentage of trials on which a reward omission was triggered by the participant looking at the singleton distractor, across search conditions and trial types, averaged across all trial-blocks.
+
+```{r OmissionPlot, fig.align='center', fig.cap = '(ref:omissions)', out.width='100%'}
+knitr::include_graphics(here("analysis", "figures", "omission_plot.png"), dpi = 300)
+
 ```
+
+### Effect of reward.
+ANOVA analysis of the percentage of reward omissions with factors of trial type (high-reward vs low-reward) and search condition (singleton search vs feature search) revealed a main effect of trial type `r apa_print.afex_aov(omissions_vmac.ANOVA, mse = F, es = "pes")$full_result$dType`. Planned paired-samples *t*-tests confirmed that participants triggered more reward omissions (i.e., were more likely to look at the colour-singleton distractor) on high-reward trials than low-reward trials in both the singleton search condition, `r apa_print(singleton_VMAC_omissions.ttest)$statistic`, $d_z=$ `r singleton_VMAC_omissions.es` (Figure \@ref(fig:OmissionPlot)A) and feature search condition, `r apa_print(feature_VMAC_omissions.ttest)$statistic`, $d_z=$ `r feature_VMAC_omissions.es` (Figure \@ref(fig:OmissionPlot)B), demonstrating an effect of reward on overt attentional capture (i.e., a VMAC effect) regardless of whether participants were encouraged to adopt a more specific target template. Importantly, search condition did not exert a significant main effect, `r apa_print.afex_aov(omissions_vmac.ANOVA, mse = F, es = "pes")$full_result$condition`, or significantly interact with the effect of trial type, $F(1,62) < 0.01$, $p=.985$, $\hat{\eta}^2_p < .0001$. In order to quantify support for the null hypothesis that the influence of reward on attentional capture did not vary depending on participants' target template, we conducted a Bayesian *t*-test to compare the magnitude of the VMAC effect across the two search conditions. This revealed a Bayes Factor of `r apa_print(vmac_condition_bayes)$statistic`, indicating moderate support for the null hypothesis of no difference in the size of the VMAC effect under singleton search and fearure search conditions.
+
+### Effect of physical salience.
+ANOVA analysis of the percentage of reward omissions revealed a non-significant main effect of trial type (low-reward vs distractor-absent), `r apa_print.afex_aov(omissions_salience.ANOVA, mse = F, es = "pes")$full_result$dType`, and a significant main effect of search condition (singleton search vs feature search), `r apa_print.afex_aov(omissions_salience.ANOVA, mse = F, es = "pes")$full_result$condition`. Critically, this main effect was qualified by a significant trial type $\times$ search condition interaction, `r apa_print.afex_aov(omissions_salience.ANOVA, mse = F, es = "pes")$full_result$condition_dType`, indicating that the effect of physical salience on overt attentional capture differed across search conditions. Paired-samples *t*-tests revealed that participants in the singleton search condition triggered significantly more reward omissions on trials that contained a colour-singleton distractor than those that did not, `r apa_print(singleton_physicalsalience_omissions.ttest)$statistic`, $d_z=$ `r singleton_physicalsalience_omissions.es`, suggesting that overt attention was captured by the physically salient singleton. In contrast, participants in the feature search condition triggered fewer reward omissions on trials containing a colour-singleton distractor than trials with no coloured singleton, `r apa_print(feature_physicalsalience_omissions.ttest)$statistic`, $d_z=$ `r feature_physicalsalience_omissions.es`, suggesting that overt attention to the singleton distractor was suppressed under conditions promoting feature search, consistent with previous findings [@Gaspelin2016].
+
+```{r SaccadePlot, fig.align='center', fig.cap = '(ref:saccadeFig)', out.width='100%'}
+knitr::include_graphics(here("analysis", "figures", "saccade_plot.png"), dpi = 300)
+
+```
+
+## First Saccade Direction
+Figure \@ref(fig:SaccadePlot) shows the percentage of first saccades directed towards each stimulus type (i.e., the target[^2], average nonsingleton distractor, and singleton distractor) on high- and low-reward trials for the singleton search (Figure \@ref(fig:SaccadePlot)A) and feature search (Figure \@ref(fig:SaccadePlot)C) conditions; Figures \@ref(fig:SaccadePlot)B and \@ref(fig:SaccadePlot)D show capture scores (difference in percentage of first saccades directed towards singleton versus average nonsingleton distractor) for the singleton search and feature search conditions, respectively. ANOVA analysis of capture scores revealed a significant main effect of trial type (high-reward vs low-reward), `r apa_print.afex_aov(capture.ANOVA, mse = F, es = "pes")$full_result$dType`, with the singleton capturing attention more often on high-reward trials than low-reward trials; once again demonstrating a VMAC effect. A main effect of search condition (singleton search vs feature search), `r apa_print.afex_aov(capture.ANOVA, mse = F, es = "pes")$full_result$condition`, indicated that both the high-reward and low-reward singleton captured attention more often, on average, in the singleton search condition than the feature search condition. Importantly, the trial type $\times$ search condition interaction was non-significant, `r apa_print.afex_aov(capture.ANOVA, mse = F, es = "pes")$full_result$condition_dType`, with a corresponding Bayes factor of `r apa_print(capture_bayes)$statistic` indicating moderate support for the null hypothesis that search condition had no effect on the magnitude of the VMAC effect on first saccade direction.
+
+[^2]: Note that the comparison of interest in determining whether a stimulus captured attention, or was otherwise suppressed, is the percentage of first saccades to the singleton vs. the average nonsingleton distractor. Thus, while we have included the percentage of first saccades to the target in Figure \@ref(fig:SaccadePlot) for the sake of completeness, we have not included these data in our analyses.
+
+Next we tested whether overt attention to each distractor type was captured or suppressed in each search condition. Planned one-sample *t*-tests showed that capture scores were significantly greater than zero (indicating that overt attention was captured by the high-reward singleton) under conditions promoting singleton search, `r apa_print(Singleton_high.ttest)$statistic`, $d_z=$ `r Singleton_high.es`, as well as feature search, `r apa_print(Feature_high.ttest)$statistic`, $d_z=$ `r Feature_high.es`. For the low-reward distractor, there was a non-significant numerical trend towards capture in the singleton search condition, `r apa_print(Singleton_low.ttest)$statistic`, $d_z=$ `r Singleton_low.es`. In contrast, for the feature search condition, capture score was significantly below zero, `r apa_print(Feature_low.ttest)$statistic`, $d_z=$ `r Feature_low.es`, indicating that overt attention to the low-reward singleton was suppressed. Thus, in line with previous findings [@Gaspelin2016], our data suggest that overt attention to physically salient singletons can be suppressed when participants are encouraged to adopt a specific target template. However, singletons that have been associated with high-reward reward capture overt attention, regardless of participants' target template and despite such capture being directly counterproductive to earning reward.
+
+```{r blockPlot, fig.align='center', fig.cap = '(ref:blockFig)', out.width='100%'}
+knitr::include_graphics(here("analysis", "figures", "capture_plot_by_block.png"), dpi = 300)
+
+```
+
+## Development of attentional capture/suppression across training
+Recent research suggests that attentional suppression develops over the course of repeated experience with the to-be-ignored stimulus feature [@Gaspelin2018b; @Vatterott2012]. In order to investigate this in the current study, we divided the experiment into four epochs (96 trials/epoch) and calculated capture scores (as described earlier) for each trial type (see Figure \@ref(fig:blockPlot)). These data were analysed using an ANOVA with factors of search condition (singleton search, feature search), trial type (high, low), and epoch (1--4). This once again revealed a main effect of search condition, `r apa_print.afex_aov(capture_byblock.ANOVA, mse = F, es = "pes")$full_result$condition`, and trial type, `r apa_print.afex_aov(capture_byblock.ANOVA, mse = F, es = "pes")$full_result$dType`. Critically, there was also a significant interaction between trial type and epoch, `r apa_print.afex_aov(capture_byblock.ANOVA, mse = F, es = "pes")$full_result$newblock_dType`. There were no other significant main or interaction effects (all *p*'s $>.25$). Follow-up contrasts revealed a significant negative linear trend for low-reward trials, $t(369)=$ `r printnum(capture_byblock.polys$t.ratio[[4]])`, $p$ `r printp(capture_byblock.polys$p.value[[4]])`, with capture by the low-reward distractor decreasing as the experiment progressed and experience with the physically salient feature increased (notably, in the feature search condition scores become increasingly negative, indicating increasing \emph{suppression} of the low-reward distractor). In contrast, for high-reward trials there was a significant positive linear trend, $t(369)=$ `r printnum(capture_byblock.polys$t.ratio[[1]])`, $p=$ `r printp(capture_byblock.polys$p.value[[1]])`, with capture by the high-reward distractor increasing as the experiment progressed and experience with the reward associated feature increased.
+
+
+
+```{r VincentizedPlot, fig.align='center', fig.cap = '(ref:vincentizedFig)', out.width='100%'}
+knitr::include_graphics(here("analysis", "figures", "vincentized_plot.png"), dpi = 300)
+
+```
+
+
+## Attentional capture/suppression effects for the fastest quartile of saccadic latencies
+To investigate the time course of the overt attentional capture and suppression effects, we analysed capture scores (proportion of first saccades towards the singleton distractor minus the average nonsingleton distractor) on high-reward and low-reward trials as a function of saccade latency using the Vincentizing procedure [@Ratcliff1979]. We calculated mean saccade latency and capture score separately for each trial type and quartile of the individual saccade latency distributions. We then analysed the capture scores for the most rapidly generated saccades. According to the signal suppression hypothesis, the top-down suppression effect is activated early in processing, prior to the initial allocation of attention [@Gaspelin2018a]. Therefore the speed with which a saccade is initiated should have no effect on the extent to which overt attention can be suppressed. As illustrated in Figure \@ref(fig:VincentizedPlot), the most rapidly generated saccades were captured by the high-reward singleton (capture scores $>0$) in both the singleton search, `r apa_print(vincentized_singleton_high_q1.ttest)$statistic`, $d_z=$ `r vincentized_singleton_high_q1.es`, and feature search conditions, `r apa_print(vincentized_feature_high_q1.ttest)$statistic`, $d_z=$ `r vincentized_feature_high_q1.es`. Similarly, the the most rapidly generated saccades were captured by the low-reward singleton in both the singleton search, `r apa_print(vincentized_singleton_low_q1.ttest)$statistic`, $d_z=$ `r vincentized_singleton_low_q1.es`, and feature search conditions, `r apa_print(vincentized_feature_low_q1.ttest)$statistic`, $d_z=$ `r vincentized_feature_low_q1.es`. It is notable that we observed capture (rather than suppression) for the fastest saccades for both trial-types in the feature search condition. This finding is inconsistent with Gaspelin et al.’s [-@Gaspelin2016] previous report of attentional suppression of physically salient singleton distractors in the fastest eye-movements.
+
 
 # Discussion
+In this experiment, we investigated the role of top-down control processes in actively suppressing overt attention to physically salient and reward-associated distractor stimuli. In line with the signal suppression hypothesis [@Gaspelin2016; @Gaspelin2015], we found that overt attention to physically salient colour singleton distractors can be actively suppressed under conditions that promote top-down guidance of attention. Consistent with recent findings [@Gaspelin2018b; @Vatterott2012], this attentional suppression effect gradually emerged over the course of the experiment, as participants gained experience with the physically salient distractor feature. Furthermore, we found an effect of reward association on overt attention [i.e., VMAC; @LePelley2015b; @Pearson2015], with participants' gaze more likely to be captured by distractor stimuli that signalled high reward than low reward, even though looking at reward-signalling distractors caused omission of rewards that otherwise would have been delivered. Similar to the attentional suppression effect, attentional capture by reward-associated distractors also emerged over the course of the experiment, as participants experienced more pairings of stimulus features with reward. Critically, this study was the first to demonstrate that---unlike the influence of physical salience---the influence of reward association on attention cannot be suppressed under conditions that promote top-down guidance of attention. Regardless of whether participants were encouraged to search for specific target defining features (i.e., feature search mode) or to search for the odd-one-out (singleton search mode), stimuli associated with high reward captured overt attention. Notably, this attentional bias was counterproductive, in that it led to the omission of more high rewards than low rewards, and so participants should have been highly motivated to suppress their attention to the high-reward distractor if possible. Nevertheless, the high-reward distractor captured attention, even under conditions that allowed participants to suppress their attention to physically salient distractors that were associated with low reward. Our key finding, then, is that reward-related stimuli constitute especially potent attentional priority signals that are relatively immune to suppression by top-down control processes that can act to prevent distraction by physical salience.
 
-# Conclusion
+Most influential models of attentional selection assume that stimulus-driven and goal-directed influences are integrated onto a common priority map in the brain, with attention directed towards the spatial location with the highest peak of activation [e.g., @Itti2001; @Theeuwes2010; @Wolfe2007]. The priority map concept has also been used to explain how selection history influences attentional allocation [@Awh2012; @Failing2018], with the attentional priority signal of reward-related stimulus features increasing with repeated stimulus-reward pairings through a process of associative learning [@Pearson2016; @LePelleya]. Recent formulations of the signal suppression hypothesis have suggested that the top-down suppression mechanism may operate in a similar way, with the attentional priority of to-be-ignored stimulus features being proactively downweighted with repeated experience [@Gaspelin2018a]. At first glance, the results of the current study may seem inconsistent with the idea that reward and top-down suppression engage in competition on a common priority map, as the magnitude of the VMAC effect did not differ between search conditions, even though the feature search condition should have encouraged top-down guidance of attention. However, there was an overall decrease in the amount of capture by both the high- and low-reward distractor in the feature search condition This raises the possibility that repeated experience of the physically salient stimulus features (i.e., orange and blue colour) allows the attentional priority of those features to be uniformly downweighted by the top-down suppression mechanism. In addition, our findings are consistent with the idea that repeated experience of the stimulus feature-reward pairings selectively upweights the attentional priority of the high-reward distractor, such that it overpowers the influence of top-down suppression and thus captures attention.
 
-# Acknowledgements
 
-<!-- The following line inserts a page break when the output is MS Word. For page breaks in PDF, use \newpage on its own line.  -->
-##### pagebreak
+An inconsistency between the results of the current study and that of @Gaspelin2016 comes from the time-course of the attentional capture and suppression effects that were observed. According to the signal suppression hypothesis, top-down suppression operates prior to the initial allocation of attention, and so suppression should be observed even for the most rapidly generated saccades. Consistent with this idea, @Gaspelin2016 observed an overt attentional suppression effect to physically salient singleton distractors amongst the fastest quartile of saccade latencies. In contrast, in the current experiment we observed overt attentional capture in the fastest quartile of saccade latencies, with the suppression effect emerging on trials with slower saccades. Methodological differences between Gaspelin et al.'s  [-@Gaspelin2016] experiment and the current study may be responsible for this discrepancy. For example, the availability of reward on low-reward trials may have influenced capture, either by somewhat increasing the attentional priority of the stimulus feature associated with low-reward reward, or by otherwise influencing participants' motivation to respond quickly. Alternatively, the discrepancy in findings may reflect our use of two potential targets (circle and diamond) in the feature search condition, as opposed to the same target on all trials in Gaseplin et al.'s procedure. Having two possible targets could reduce the influence of trial-by-trial upweighting of target features [@Maljkovic1994], but may also result in less effective feature search [e.g., @Houtkamp2009; but see @Grubert2015]. How these methodological differences might influence the time-course of overt attentional capture and suppression remains a question for future research. Nonetheless, the finding does raise questions about whether the attentional suppression effect that we have observed is truly the result of proactive top-down suppression of salient stimuli, as suggested by the signal suppression hypothesis, or potentially the result of rapid covert disengagement from the salient stimuli [see @Theeuwes2010; @VanZoest2004 for similar arguments].
 
-# References 
-<!-- The following line ensures the references appear here for the MS Word or HTML output files, rather than right at the end of the document (this will not work for PDF files):  -->
-<div id="refs"></div>
+As mentioned previously, attentional capture by stimuli associated with monetary rewards can be mapped on to the attentional biases to drug-related stimuli seen in addiction. Indeed, recent findings suggest that these biases may be the result of a common mechanism [@Anderson2013; @Albertella2017a]. This is consistent with the idea of incentive salience [@Berridge1998], where the perceptual representation of an otherwise neutral stimulus is modified so as to become more salient and attention grabbing to the observer, as a result of its association with a desired outcome (e.g., drugs, money). The current study suggests that incentive salience has a particularly powerful influence on the attentional system, overcoming top-down control mechanisms that can effectively prevent capture by physically salient stimuli. This may have implications for the development of treatments for substance use disorders that target these attentional biases. 
 
-##### pagebreak
+(ref:methodFig) Trial structure of the current task. (A) Participants in the singleton search condition experienced search displays where the target was a unique shape (either a circle amongst diamonds or diamond amongst circles). (B) Participants in the feature search condition experienced search displays where the target was either a circle or diamond shape presented amongst a set of heterogenous shapes. On most trials, one of the non-target shapes was rendered in either orange or blue so as to be a colour singleton distractor, leaving two other nonsingleton non-targets in the display. (C) Participants began by fixating on a centrally presented fixation cross. A search display then appeared, and participants were required to make a rapid saccade to the target. The colour of the singleton distractor indicated the available reward (10 or 500 points), but looking at the distractor led to reward omission.
 
-### Colophon
 
-This report was generated on `r Sys.time()` using the following computational environment and dependencies: 
+(ref:omissions) Filled points show the mean percentage of reward omissions on each trial type for the (A) singleton search condition, and (B) feature search condition. A reward omission was triggered when the participant looked at the singleton distractor (or the nonsingleton distractor assigned as the "singleton" location on distractor absent trials; see Design) prior to looking at the target. Individual participant performance is shown by faint grey lines. Error bars in all figures represent within-subjects SEM [@Cousineau2005] with Morey [-@Morey2008] correction. *** $p<.005$, * $p<.05$.
 
-```{r colophon, cache = FALSE}
-# which R packages and versions?
-devtools::session_info()
+
+(ref:saccadeFig) First saccade direction data. (A) Filled points show the mean percentage of first saccades directed towards the target, average nonsingleton distractor and singleton distractor, on high- and low-reward trials, for participants in the singleton search condition. Individual participant performance shown by faint underlying points. (B) These data are converted into capture scores (calculated as the percentage saccades to the singleton distractor minus percentage saccades to the average nonsingleton distractor) for high-reward and low-reward trials. Positive capture scores indicate that the singleton distractor captured overt attention, and negative capture scores indicate that the overt attention to the singleton distractor was suppressed. (C) Mean percentage of first saccades to each stimulus type, and (D) capture scores for participants in the feature search condition. Error bars represent within-subjects SEM. *** $p<.001$, * $p<.05$.
+
+(ref:blockFig) Capture scores across five 96-trial epochs of the experiment for participants in the (A) singleton search condition and (B) feature search condition. Positive capture scores indicate that the singleton distractor captured attention, whereas negative capture scores indicate that attention to the singleton distractor was suppressed. Error bars represent within-subjects SEM.
+
+(ref:vincentizedFig) Capture scores as a function of saccade latency quartile for participants in the (A) singleton search condition and (B) feature search condition. Mean first saccade latencies and the proportion of first saccades directed towards each stimulus type were calculated separately for each quintile of individual participant saccade latency distributions using the Vincentizing procedure [@Ratcliff1979]. Positive capture scores indicate that the singleton distractor captured attention, whereas negative capture scores indicate that attention to the singleton distractor was suppressed. Error bars represent within-subjects SEM. *** $p<.001$, ** $p<.01$.
+
+
+\newpage
+
+# References
+```{r create_r-references}
+r_refs(file = "r-references.bib")
 ```
 
-The current Git commit details are:
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
 
-```{r}
-# what commit is this file at? 
-git2r::repository(here::here())
-```
+<div id = "refs"></div>
+\endgroup

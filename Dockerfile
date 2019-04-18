@@ -20,3 +20,4 @@ RUN . /etc/environment \
  # render the manuscript into a docx, you'll need to edit this if you've
  # customised the location and name of your main Rmd file
   && R -e "rmarkdown::render('/vmacfeaturesearch/analysis/paper/paper.Rmd')"
+  && R -e "rmarkdown::render('/vmacfeaturesearch/analysis/analysis_report.Rmd')"
