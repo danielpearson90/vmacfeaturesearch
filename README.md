@@ -3,28 +3,23 @@
 vmacfeaturesearch
 =================
 
-This repository contains the data and code for our project investigating whether overt attention to reward-related distractors can be suppressed under feature search conditions in the same way as for physically salient distractors (see Gaspelin, Leonard, & Luck, 2017 - Attn Percept Psychophys).
+This repository contains the data and analysis code for our project investigating whether overt attention to reward-related distractors can be suppressed under feature search conditions.
 
-<!-- Our pre-print is online here:
+This repository contains data files that have been derived from the raw eye-tracker data. The raw eye-gaze files are very large and so are not stored here. They can be found at: <https://osf.io/yrdzv/>.
 
-> Authors, (YYYY). _Title of your paper goes here_. Name of journal/book, Accessed 11 Apr 2019. Online at <https://doi.org/xxx/xxx>
+Our pre-print is online here:
 
+> Pearson, D., Watson, P., Cheng, P., Most, S. (2019). *Overt attentional capture by reward-related stimuli overcomes top-down suppression*. Name of journal/book, Accessed 18 Apr 2019. Online at <https://doi.org/xxx/xxx>
 
 ### How to cite
 
 Please cite this compendium as:
 
-> Authors, (2019). _Compendium of R code and data for Title of your paper goes here_. Accessed 11 Apr 2019. Online at <https://doi.org/xxx/xxx>  -->
+> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019. Investigating attentional suppression of reward-related distractors. Retrieved from <https://osf.io/yrdzv>
+
 ### How to download or install
 
 You can download the compendium as a zip from from this URL: <https://github.com/danielpearson90/vmacfeaturesearch/archive/master.zip>
-
-Or you can install this compendium as an R package, vmacfeaturesearch, from GitHub with:
-
-``` r
-# install.packages("devtools")
-devtools::install_github("danielpearson90/vmacfeaturesearch")
-```
 
 ### Licenses
 
@@ -33,7 +28,3 @@ devtools::install_github("danielpearson90/vmacfeaturesearch")
 **Code :** See the [DESCRIPTION](DESCRIPTION) file
 
 **Data :** [CC-BY-4.0](http://creativecommons.org/licenses/by/4.0/), Copyright (c) 2019 Daniel Pearson.
-
-### Contributions
-
-We welcome contributions from everyone. Before you get started, please see our [contributor guidelines](CONTRIBUTING.md). Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms.
