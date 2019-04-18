@@ -1,5 +1,5 @@
 ---
-title: "Analysis_Report"
+title: "Analysis Report"
 author: "Daniel Pearson"
 date: "11 April 2019"
 output: html_document
@@ -19,6 +19,24 @@ library(cowplot)
 library(BayesFactor)
 library(hrbrthemes)
 library(ggsignif)
+library(summarytools)
+
+st_options(bootstrap.css     = FALSE,       # Already part of the theme so no need for it
+           plain.ascii       = FALSE,       # One of the essential settings
+           style             = "rmarkdown", # Idem.
+           dfSummary.silent  = TRUE,        # Suppresses messages about temporary files
+           footnote          = NA,          # Keeping the results minimalistic
+           subtitle.emphasis = FALSE)       # For the vignette theme, this gives
+                                            # much better results. Your mileage may vary.
+
+st_css()
+
+library(knitr)
+opts_chunk$set(comment=NA, prompt=FALSE, cache=FALSE, echo=TRUE, results='asis')
+
+source(here::here("R", "dz_calculator.r"))
+source(here::here("R", "vmac_pal.R"))
+source(here::here("R", "summarySEwithin2.r"))
 
 vmacCols <- vmac_pal()
 my_theme <- theme_ipsum_rc(grid = F, axis_title_just = "c", axis_title_size = 14, axis_text_size = 12, strip_text_size = 14, plot_title_size = 14, subtitle_size = 14, ticks = T) +
@@ -39,7 +57,7 @@ my_theme <- theme_ipsum_rc(grid = F, axis_title_just = "c", axis_title_size = 14
 
 ```
 
-# Behavioural Analysis
+# Omission Trial Analysis
 
 ```{r Load Behavioural Data, include=FALSE}
 files <- dir(path = here::here("analysis", "data", "raw_data", "BehavData"), pattern = "*.mat")
@@ -112,6 +130,7 @@ exptdata <- exptdata %>%
   mutate(dType = factor(distractType, levels = c(1,2,3), labels = c("High", "Low", "Absent")))
 ```
 
+We first removed participants who had poor gaze data (mean proportion of valid gaze samples during the fixation or trial period < .5).
 ```{r Remove participants with poor gaze data}
 propCutoff <- .5
 allTracks <- exptdata %>%
@@ -132,15 +151,13 @@ exptdata <- exptdata %>%
  filter(!sub %in% poortracks$sub)
 ```
 
-We removed data for any participants who did not have sufficient quality gaze data. If participants have an average of less than `r propCutoff*100`% valid gaze data during the fixation period or during a trial, they are removed from the data set.
-
-`r length(poortracks)` participants were removed due to having a poor track.
+`r length(poortracks)` participants were removed due to having a poor quality eye gaze data.
 
 ```{r Remove participants for any other reasons}
 
 remove_p_numbers <- c(37)
 
-#  check to make sure that everyone has completed the full 480 trials
+#  check to make sure that everyone has completed the full 480 trials (e.g., if the experiment crashed/was abandoned due to poor gaze data)
 didNotComplete <- exptdata %>%
   group_by(sub) %>%
   filter(block > 0) %>%
@@ -155,9 +172,9 @@ exptdata <- exptdata %>%
   filter(!sub %in% remove_p_numbers)
 ```
 
-`r length(remove_p_numbers)` participants were removed for other reasons (participant #37 they thought that they needed to look at the coloured circle in order to earn rewards, participant #26 and #85 did not complete the experiment due to difficulty tracking their eyes).
+During a post-experiment debrief, participant #37 reported that they thought that they needed to look at the coloured circle in order to earn rewards, and so they were removed from the data set.
 
-Then we remove the first two trials of the experiment, the first two trials after breaks, and timeouts from the data (in line with previous VMAC analysis protocols):
+Then we removed the first two trials of the experiment, the first two trials after breaks, and timeouts from the data (in line with previous VMAC analysis protocols, e.g. Le Pelley et al, 2015 - __JEP:General__).
 
 ```{r Additional data exclusions}
 # first we determine the percentage of trials that were timeouts (for reporting in the MS)
@@ -171,21 +188,64 @@ exptdata <- exptdata %>%
   filter(timeout != 1) # removing timeouts
 ```
 
+This is the data set that we are left with:
+
+```{r Glimpse exptdata after exclusions}
+print(dfSummary(exptdata, style = "grid", graph.magnif = 0.75, tmp.img.dir = "/tmp"),  max.tbl.height = 300, method = "render")
+```
+
+Key for each of the variables in the table:
+
+```{r table2, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Variable name | Explanation                                  |
+|---------------|--------------------------------------------|
+| block         | Experiment block (1--8; 60 trials per block) |
+| trial         | Experiment trial (1--480)      |
+| trialCounter  | Trial counter within a block (1--60)      |
+| trials_since_break         | Trial counter since last break (same as trialCounter for this experiment) |
+| targetLoc         | Location of the target stimulus of 4 possible locations     |
+| targetType  | Whether the target was a diamond or a circle (1 - diamond, 2 - circle)    |
+| distractLoc         | Location of the singleton distractor (or random non-singleton on distractor absent trials) |
+| distractShape         | The shape that defined the singleton distractor (1 - diamond, 2 - circle, 3 - hexagon, 4 - square)      |
+| distractType  | Whether it was a high (1), low (2), or absent (3) trial     |
+| fixationTime         | Length of fixation period in seconds |
+| fixationPropGoodSamples         | The proportion of valid samples within the fixation period     |
+| fixationTimeout  | Whether the fixation timeout period (4 seconds) was reached before a valid fixation was recorded  |
+| trialPropGoodSamples         | The proportion of valid samples within the trial period |
+| timeout         | Whether a hard-timeout (2 seconds) was reached before the target was fixated      |
+| softTimeoutTrial  | Whether a soft-timeout (1 second) was reached, meaning that no reward was awarded   |
+| omissionTrial         | Whether an omission trial was recorded  |
+| rt         | Response time in seconds     |
+| trialPay  | The reward for the current trial (in points)    |
+| sessionPay         | Total reward accumulated during the experiment (in points) |
+| timeOnLoc 1--5         | Amount of time (in seconds) that gaze was recorded on each stimulus location (1--4), and anywhere else (5)     |
+| sub  | Participant identifier     |
+| counterbal         | Code assigning participants to each condition (singleton vs feature) and colour--reward mapping |
+| age         | Age in years     |
+| gender  | Self-reported gender (m/f/o)  |
+| condition         | Search condition (1 - feature search, 2 - singleton search)    |
+| dType  | Distractor type (1 - high, 2 - low, 3 - absent)  |
+"
+cat(tabl) # output the table in a format good for HTML/PDF/docx conversion
+```
+
 ## Omission Trials
-```{r Omission Trial Means}
+```{r Omission Trial Means, message=FALSE, warning=FALSE}
+# Calculate mean proportion of omission trials for each trial type, by participant
 exptdata_means_byparticipant <- exptdata %>%
   ungroup() %>%
   group_by(sub, condition, dType) %>%
   summarise(m = mean(omissionTrial))
 
+# Calculate mean proportion of omission trials for each trial type, by condition
 exptdata_means_bycondition <- summarySEwithin2(data = exptdata_means_byparticipant, measurevar = "m", betweenvars = "condition", withinvars = "dType", idvar = "sub") %>%
   select(-ends_with("Normed"))
 ```
 
+Draw a graph of omission trials for each condition:
 
-```{r Omission Trial Graph}
-
-
+```{r Omission Trial Graph, fig.height=10, fig.width=5.5, message=FALSE, warning=FALSE, echo=FALSE}
 omissionPlot_singleton <- exptdata %>%
   filter(condition == "Singleton Search") %>%
   group_by(sub, dType) %>%
@@ -234,11 +294,13 @@ omissionPlot_ms
 Effect of reward ANOVA:
 ```{r Effect of Reward - Omissions}
 omissions_vmac.ANOVA <- aov_car(m ~ condition*dType + Error(sub/dType), data = filter(exptdata_means_byparticipant, dType != "Absent"), anova_table = list(es="pes"))
+
+knitr::kable(nice(omissions_vmac.ANOVA))
 ```
-Significant main effect of reward (indicating VMAC effect), but no interaction with or main effect of search condition.
+
 
 Planned t-tests:
-```{r Effect of Reward - Omissions - Planned t-tests}
+```{r Effect of Reward - Omissions - Planned t-tests, results="markup"}
 singleton_high_omissions <- exptdata_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Singleton Search") %>%
@@ -282,9 +344,13 @@ feature_absent_omissions <- exptdata_means_byparticipant %>%
   pull()
 
 singleton_VMAC_omissions.ttest <- t.test(singleton_high_omissions, singleton_low_omissions, paired = T)
+singleton_VMAC_omissions.ttest
 singleton_VMAC_omissions.es <- dz_calculator(singleton_high_omissions, singleton_low_omissions)
+singleton_VMAC_omissions.es
 feature_VMAC_omissions.ttest <- t.test(feature_high_omissions, feature_low_omissions, paired = T)
+feature_VMAC_omissions.ttest
 feature_VMAC_omissions.es <- dz_calculator(feature_high_omissions, feature_low_omissions)
+feature_VMAC_omissions.es
 
 vmac_singleton <- exptdata_means_byparticipant %>%
   filter(dType != "Absent", condition == "Singleton Search") %>%
@@ -299,6 +365,7 @@ vmac_feature <- exptdata_means_byparticipant %>%
   pull
 
 vmac_condition_bayes <- ttestBF(x = vmac_singleton, y = vmac_feature)
+vmac_condition_bayes
 ```
 
 
@@ -307,18 +374,20 @@ Effect of physical salience ANOVA:
 ```{r Effect of Physical Salience - Omissions}
 omissions_salience.ANOVA <- aov_car(m ~ condition*dType + Error(sub/dType), data = filter(exptdata_means_byparticipant, dType != "High"), anova_table = list(es="pes"))
 
-omissions_salience.ANOVA
+knitr::kable(nice(omissions_salience.ANOVA))
 ```
 
 Planned t-tests:
-```{r Effect of Physical Salience - Omissions - Planned t-tests}
+```{r Effect of Physical Salience - Omissions - Planned t-tests, results="markup"}
 singleton_physicalsalience_omissions.ttest <- t.test(singleton_low_omissions, singleton_absent_omissions, paired = T)
-
+singleton_physicalsalience_omissions.ttest
 singleton_physicalsalience_omissions.es <- dz_calculator(singleton_low_omissions, singleton_absent_omissions)
+singleton_physicalsalience_omissions.es
 
 feature_physicalsalience_omissions.ttest <- t.test(feature_absent_omissions, feature_low_omissions, paired = T) # reverse the order here so can get positive t value
-
+feature_physicalsalience_omissions.ttest
 feature_physicalsalience_omissions.es <- dz_calculator(feature_low_omissions, feature_absent_omissions)
+feature_physicalsalience_omissions.es
 ```
 
 # Gaze Data Analyses
@@ -366,9 +435,33 @@ saccadedata <- left_join(exptdata, saccade_filedata, by = c("sub" = "subj", "tri
   mutate(num_nonsingletons = if_else(dType == "Absent", 3, 2)) # add the number of nonsingletons for each trial type
 ```
 
+```{r Glimpse saccadedata}
+print(dfSummary(saccadedata, style = "grid", graph.magnif = 0.75, tmp.img.dir = "/tmp"),  max.tbl.height = 300, method = "render")
+```
+
+Key for each of the new variables in saccadedata data frame:
+
+```{r table3, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl2 <- "
+| Variable name | Explanation                                  |
+|---------------|--------------------------------------------|
+| latency         | Saccade latency in milliseconds |
+| loc 1--5         | Whether the first saccade was directed towards location 1--4, or somewhere else (loc 5)      |
+| discardTrial  | Whether the trial should be excluded from saccade analyses due to exclusion criteria      |
+| anticipatorySaccade         | Whether saccade latency was <80ms |
+| outsideFixation         | Trials in which no gaze was reocrded within 100 pixels of fixation in the first 80 ms    |
+| noSaccades  | Trials in which the saccade identification algorithm did not detect a saccade   |
+| noValidData         | Trials in which there was insufficient valid gaze data to detect a saccade |
+| first_saccade_loc         | The direction of the first saccade (locations 1--4, or elsewhere [loc 5])     |
+| saccade_to_target  | Whether the first saccade was directed towards the target    |
+| saccade_to_nonsingleton         | Whether the first saccade was directed towards one of the non-singleton distractors |
+| num_nonsingletons         | The number of non-singleton distractors in the display (2 on high and low trials, 3 on distractor absent trials)     |
+"
+cat(tabl2) # output the table in a format good for HTML/PDF/docx conversion
+```
 
 ## First saccade direction
-```{r First saccade direction - means}
+```{r First saccade direction - means, warning=FALSE, message=FALSE}
 # calculate summary statistics for each participant
 saccadeData_means_byparticipant <- saccadedata %>%
   ungroup() %>%
@@ -412,7 +505,9 @@ captureMeans <- summarySEwithin2(captureData_means_byparticipant, measurevar = "
   select(-ends_with("Normed"))
 ```
 
-```{r First Saccade Direction - Plot, echo = FALSE}
+Graph of the first saccade data and capture scores:
+
+```{r First Saccade Direction - Plot, echo=FALSE, fig.height=10, fig.width=10, message=FALSE, warning=FALSE}
 saccadePlot_singleton <- saccadeData_means_bycondition %>%
   filter(condition == "Singleton Search", dType != "Absent") %>%
   ggplot(aes(group = dType, y = proportionSaccades, fill = dType, x = stimType, shape = dType, colour = dType)) +
@@ -503,10 +598,10 @@ saccadePlot_ms
 ```
 
 
-```{r First Saccade Direction - Capture ANOVA}
+```{r First Saccade Direction - Capture ANOVA, results="markup", message = FALSE}
 capture.ANOVA <- aov_car(Capture ~ condition*dType + Error(sub/dType), data = captureData_means_byparticipant,  anova_table = list(es="pes"))
 
-capture.ANOVA
+knitr::kable(nice(capture.ANOVA))
 
 # Bayes Factor for interaction contrast
 captureData_wide <- captureData_means_byparticipant %>%
@@ -517,11 +612,11 @@ captureData_wide <- captureData_means_byparticipant %>%
 capture_bayes <- ttestBF(x = captureData_wide$vmac[captureData_wide$condition == "Singleton Search"], 
                          y = captureData_wide$vmac[captureData_wide$condition == "Feature Search"])
 
-1/capture_bayes
+capture_bayes
 
 ```
 
-```{r First Saccade Direction - Planned t-tests}
+```{r First Saccade Direction - Planned t-tests, results = "markup"}
 Singleton_high.ttest <- captureData_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Singleton Search") %>%
@@ -529,6 +624,8 @@ Singleton_high.ttest <- captureData_means_byparticipant %>%
   select(Capture) %>%
   pull() %>%
   t.test()
+
+Singleton_high.ttest
 
 Singleton_high.es <- captureData_means_byparticipant %>%
   ungroup() %>%
@@ -538,6 +635,8 @@ Singleton_high.es <- captureData_means_byparticipant %>%
   summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = mean_capture/sd_capture) %>%
   pull(d_z)
 
+Singleton_high.es
+
 Singleton_low.ttest <- captureData_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Singleton Search") %>%
@@ -545,6 +644,8 @@ Singleton_low.ttest <- captureData_means_byparticipant %>%
   select(Capture) %>%
   pull() %>%
   t.test()
+
+Singleton_low.ttest
 
 Singleton_low.es <- captureData_means_byparticipant %>%
   ungroup() %>%
@@ -554,6 +655,8 @@ Singleton_low.es <- captureData_means_byparticipant %>%
   summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = mean_capture/sd_capture) %>%
   pull(d_z)
 
+Singleton_low.es
+
 Feature_high.ttest <- captureData_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Feature Search") %>%
@@ -561,6 +664,8 @@ Feature_high.ttest <- captureData_means_byparticipant %>%
   select(Capture) %>%
   pull() %>%
   t.test()
+
+Feature_high.ttest
 
 Feature_high.es <- captureData_means_byparticipant %>%
   ungroup() %>%
@@ -570,6 +675,8 @@ Feature_high.es <- captureData_means_byparticipant %>%
   summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = mean_capture/sd_capture) %>%
   pull(d_z)
 
+Feature_high.es
+
 Feature_low.ttest <- captureData_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Feature Search") %>%
@@ -577,6 +684,8 @@ Feature_low.ttest <- captureData_means_byparticipant %>%
   select(Capture) %>%
   pull() %>%
   t.test()
+
+Feature_low.ttest
 
 Feature_low.ttest$statistic <- Feature_low.ttest$statistic*-1 # just making the t value positive for reporting in the manuscript
 
@@ -587,6 +696,8 @@ Feature_low.es <- captureData_means_byparticipant %>%
   select(Capture) %>%
   summarise(mean_capture = mean(Capture), sd_capture = sd(Capture), d_z = abs(mean_capture/sd_capture)) %>%
   pull(d_z)
+
+Feature_low.es
 ```
 
 ## Development of suppression/capture effect across blocks
@@ -607,7 +718,7 @@ capturemeans_byblock <- summarySEwithin2(data = saccadeData_means_byparticipant_
   select(-ends_with("Normed"))
 ```
 
-```{r Block Analysis Graph}
+```{r Block Analysis Graph, echo=FALSE, fig.height=10, fig.width=5, message=FALSE, warning=FALSE}
 capturePlot_byblock_singleton <- 
   capturemeans_byblock %>%
   filter(condition == "Singleton Search") %>%
@@ -667,7 +778,7 @@ save_plot(here("analysis", "figures","capture_plot_by_block.png"), capturePlot_b
 ```{r Block Analysis Statistics}
 capture_byblock.ANOVA <- aov_car(capture ~ newblock*dType*condition + Error(sub/newblock*dType), data = saccadeData_means_byparticipant_byblock, anova_table = list(es="pes"))
 
-capture_byblock.ANOVA
+knitr::kable(nice(capture_byblock.ANOVA))
 
 ref_all <- lsmeans(capture_byblock.ANOVA, ~newblock | dType)
 
@@ -675,6 +786,200 @@ capture_byblock.polys <- summary(contrast(ref_all, method = "poly")) %>%
   mutate(t.ratio = abs(t.ratio),
          df = round(df, digits = 0))
 
-capture_byblock.polys
+knitr::kable(capture_byblock.polys)
 ```
+
+## Vincentized Analysis
+
+This analysis looks at the percentage of trials captured/suppressed by each distractor as a function of saccade latency.
+
+```{r Vincentized Analysis - Data Tidying}
+quartiles_cutoffs <- saccadedata %>%
+  group_by(sub, dType, condition) %>%
+  summarise(q1 = quantile(latency, probs = .25, na.rm = T), q2 = quantile(latency, probs = .5, na.rm = T), q3 = quantile(latency, probs = .75, na.rm = T), q4 = quantile(latency, probs = 1, na.rm = T))
+
+quartiles_cutoffs_figures <- saccadedata %>% 
+  group_by(sub, dType, condition) %>%
+  summarise(qs = list(enframe(quantile(latency, probs=seq(.25,.75,.25), na.rm = T)))) %>% 
+  unnest
+
+saccadedata <- full_join(saccadedata, quartiles_cutoffs, by = c("sub","dType", "condition"))
+
+saccadedata <- saccadedata %>% 
+  mutate(quartile = case_when(latency <= q1 ~ 1,
+                              latency <= q2 ~ 2,
+                              latency <= q3 ~ 3,
+                              latency <= q4 ~ 4))
+
+saccade_latency_quartiles_means_byparticipant <- saccadedata %>%
+  ungroup() %>%
+  drop_na(quartile) %>% 
+  group_by(sub, condition, dType, quartile) %>%
+  summarise(mean_latency = mean(latency, na.rm = T))
+
+saccade_latency_quartiles_means_bycondition <- summarySEwithin2(saccade_latency_quartiles_means_byparticipant, measurevar = "mean_latency", betweenvars = "condition", withinvars = c("dType", "quartile"), idvar = "sub") %>%
+  select(-ends_with("Normed"))
+
+saccade_direction_quartiles_means_byparticipant <- saccadedata %>%
+  ungroup() %>%
+  drop_na(quartile) %>% 
+  group_by(sub, condition, dType, quartile) %>%
+  summarise(saccade_to_target = mean(saccade_to_target, na.rm = T),
+            saccade_to_singleton = mean(saccade_to_singleton, na.rm = T),
+            saccade_to_nonsingleton = mean(saccade_to_nonsingleton, na.rm = T)/mean(num_nonsingletons, na.rm = T),
+            num_nonsingletons = mean(num_nonsingletons, na.rm = T),
+            capture = saccade_to_singleton - saccade_to_nonsingleton) %>%
+  filter(dType != "Absent")
+
+saccade_direction_quartiles_means_bycondition <- summarySEwithin2(saccade_direction_quartiles_means_byparticipant, measurevar = "capture", betweenvars = "condition", withinvars = c("dType", "quartile"), idvar = "sub") %>%
+  select(-ends_with("Normed")) %>%
+  left_join(., saccade_latency_quartiles_means_bycondition, by = c("dType", "condition", "quartile"), suffix = c(".prop", ".latency"))
+```
+
+```{r Vincentized Analysis - Graph, echo=FALSE, warning=FALSE, fig.height=10, fig.width=5, message=FALSE}
+
+vincentized_annotations <- c("***"," "," "," ","**"," "," "," ","***"," "," "," ","***"," "," ","")
+
+vincentizedPlot_singleton <- saccade_direction_quartiles_means_bycondition %>%
+  mutate(annotations = vincentized_annotations) %>%
+  filter(condition == "Singleton Search") %>%
+  ggplot(aes(x = mean_latency, y = capture, fill = dType, linetype = dType, colour = dType)) +
+  annotate(geom = "text", label = "Capture", x = 370, y = .3, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "text", label = "Suppression", x = 370, y = -.2, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "segment", x = 365, xend = 365, y = -.03, yend = -.37, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  annotate(geom = "segment", x = 365, xend = 365, y = .03, yend = .57, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  geom_linerange(aes(ymin = capture-se.prop, ymax = capture + se.prop), colour = "black", linetype = "solid", size = .5) +
+  geom_errorbarh(aes(xmin = mean_latency-se.latency, xmax = mean_latency+se.latency, height = 0), linetype = "solid", size = .5, colour = "black") +
+  geom_line(size = .5) +
+  geom_point(aes(shape = dType, fill = dType), size = 3, colour = "black") +
+  geom_hline(yintercept = 0, colour = "black", size = .5, linetype = "dotted") +
+  geom_text(aes(label = annotations), nudge_y = .07, colour = "black") +
+  scale_fill_manual(name = "Trial Type", values = vmacCols, guide = guide_legend(), labels = c("High-reward", "Low-reward")) +
+  scale_colour_manual(name = "Trial Type", values = vmacCols, guide = guide_legend(), labels = c("High-reward", "Low-reward")) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(-.4,.621)) +
+  scale_x_continuous(expand = c(0,0), limits = c(165, 380), breaks = seq(125,375,50)) +
+  scale_shape_manual(name = "Trial Type", guide = guide_legend(), values = c(21,22), labels = c("High-reward", "Low-reward")) +
+  scale_linetype_manual(name = "Trial Type", values = c("solid", "longdash"), guide = guide_legend(), labels = c("High-reward", "Low-reward")) +
+  coord_cartesian(xlim = c(165,360),
+                  clip = 'off') +
+  ylab("Capture Score") + xlab("Saccade latency (ms)") + labs(tag = "A", title = 'Singleton Search') +
+  my_theme + theme(axis.ticks.x = element_line(colour = "black", size = .5))
+
+vincentizedPlot_feature <- 
+  saccade_direction_quartiles_means_bycondition %>%
+  mutate(annotations = vincentized_annotations) %>%
+  filter(condition == "Feature Search") %>%
+  mutate(nudge_y = c(rep(.07, 7), -.07), nudge_x = c(0,0,0,-5,0,0,0,5)) %>%
+  ggplot(aes(x = mean_latency, y = capture, fill = dType, linetype = dType, colour = dType)) +
+  annotate(geom = "text", label = "Capture", x = 370, y = .3, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "text", label = "Suppression", x = 370, y = -.2, angle = 90, vjust = 1, hjust = .5, family = font_rc) +
+  annotate(geom = "segment", x = 365, xend = 365, y = -.03, yend = -.37, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  annotate(geom = "segment", x = 365, xend = 365, y = .03, yend = .57, arrow = arrow(type = 'closed', length = unit(6, 'pt'))) +
+  geom_linerange(aes(ymin = capture-se.prop, ymax = capture + se.prop), colour = "black", linetype = "solid", size = .5) +
+  geom_errorbarh(aes(xmin = mean_latency-se.latency, xmax = mean_latency+se.latency, height = 0), linetype = "solid", size = .5, colour = "black") +
+  geom_line(size = .5) +
+  geom_point(aes(shape = dType, fill = dType), size = 3, colour = "black") +
+  geom_hline(yintercept = 0, colour = "black", size = .5, linetype = "dotted") +
+  geom_text(aes(label = annotations, y = capture + nudge_y, x = mean_latency), colour = "black") +
+  scale_fill_manual(name = "Trial Type", values = vmacCols, guide = guide_legend()) +
+  scale_colour_manual(name = "Trial Type", values = vmacCols, guide = guide_legend()) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0,0), limits = c(-.4,.621)) +
+  scale_x_continuous(expand = c(0,0), limits = c(165, 380), breaks = seq(125,375,50)) +
+  scale_linetype_manual(name = "Trial Type", values = c("solid", "longdash"), guide = guide_legend()) +
+  scale_shape_manual(name = "Trial Type", guide = guide_legend(), values = c(21,22)) +
+  coord_cartesian(xlim = c(165,360),
+                  clip = 'off') +
+  ylab("Capture Score") + xlab("Saccade latency (ms)") + labs(tag = "B", title = 'Feature Search') +
+  my_theme + theme(axis.ticks.x = element_line(colour = "black", size = .5))
+
+legend_vincentizedPlot <- get_legend(vincentizedPlot_singleton + theme(legend.position = "bottom",
+                                                                       legend.title = element_text(size = 12),
+                                                                       legend.text = element_text(size = 12),
+                                                                       legend.key.width = unit(24, 'pt')))
+
+vincentizedPlot_ms <- vincentizedPlot_singleton + plot_spacer() + legend_saccade + plot_spacer() + vincentizedPlot_feature + plot_spacer() + plot_layout(nrow = 3, ncol = 2, heights = c(1,.2,1), widths = c(1,.05))
+
+save_plot(here("analysis","figures","vincentized_plot.png"), vincentizedPlot_ms, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
+
+vincentizedPlot_ms
+```
+
+```{r Vincentized Analysis - Statistics, results="markup"}
+vincentized_singleton_high_q1.ttest <- saccade_direction_quartiles_means_byparticipant%>%
+  ungroup() %>%
+  filter(condition == "Singleton Search", dType == "High", quartile == 1) %>%
+  select(capture) %>%
+  pull() %>%
+  t.test()
+
+vincentized_singleton_high_q1.ttest
+
+vincentized_singleton_high_q1.es <- saccade_direction_quartiles_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "High", quartile == 1) %>%
+  select(capture) %>%
+  summarise(mean_capture = mean(capture), sd_capture = sd(capture), d_z = abs(mean_capture/sd_capture)) %>%
+  pull(d_z)
+
+vincentized_singleton_high_q1.es
+
+vincentized_singleton_low_q1.ttest <- saccade_direction_quartiles_means_byparticipant%>%
+  ungroup() %>%
+  filter(condition == "Singleton Search", dType == "Low", quartile == 1) %>%
+  select(capture) %>%
+  pull() %>%
+  t.test()
+
+vincentized_singleton_low_q1.ttest
+
+vincentized_singleton_low_q1.es <- saccade_direction_quartiles_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "Low", quartile == 1) %>%
+  select(capture) %>%
+  summarise(mean_capture = mean(capture), sd_capture = sd(capture), d_z = abs(mean_capture/sd_capture)) %>%
+  pull(d_z)
+
+vincentized_singleton_low_q1.es
+
+vincentized_feature_high_q1.ttest <- saccade_direction_quartiles_means_byparticipant%>%
+  ungroup() %>%
+  filter(condition == "Feature Search", dType == "High", quartile == 1) %>%
+  select(capture) %>%
+  pull() %>%
+  t.test()
+
+vincentized_feature_high_q1.ttest
+
+vincentized_feature_high_q1.es <- saccade_direction_quartiles_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "High", quartile == 1) %>%
+  select(capture) %>%
+  summarise(mean_capture = mean(capture), sd_capture = sd(capture), d_z = abs(mean_capture/sd_capture)) %>%
+  pull(d_z)
+
+vincentized_feature_high_q1.es
+
+vincentized_feature_low_q1.ttest <- saccade_direction_quartiles_means_byparticipant%>%
+  ungroup() %>%
+  filter(condition == "Feature Search", dType == "Low", quartile == 1) %>%
+  select(capture) %>%
+  pull() %>%
+  t.test()
+
+vincentized_feature_low_q1.ttest
+
+vincentized_feature_low_q1.es <- saccade_direction_quartiles_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Feature Search") %>%
+  filter(dType == "Low", quartile == 1) %>%
+  select(capture) %>%
+  summarise(mean_capture = mean(capture), sd_capture = sd(capture), d_z = abs(mean_capture/sd_capture)) %>%
+  pull(d_z)
+
+vincentized_feature_low_q1.es
+```
+
 
