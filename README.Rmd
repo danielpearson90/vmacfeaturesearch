@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
   fig.path = "README-"
 )
 # Please put your title here to include it in the file below. 
-Title <- "Overt attentional capture by reward-related stimuli overcomes top-down suppression"
+Title <- "Overt attentional capture by reward-related stimuli overcomes inhibitory suppression"
 ```
 
 # vmacfeaturesearch
