@@ -41,12 +41,12 @@ footnotelist      : no
 linenumbers       : no
 mask              : no
 draft             : no
-
+csl               : "american-psychological-association-6th-edition_no_first_citation.csl"
 header-includes:
   - \raggedbottom
 
 documentclass     : "apa6"
-classoption       : "jou, a4paper, noextraspace"
+classoption       : "man, a4paper, noextraspace, 11pt"
 output            : papaja::apa6_pdf
 nocite: |
  
@@ -57,13 +57,15 @@ nocite: |
 ```{r setup, include = FALSE}
 library("papaja")
 library(here)
-load(here::here("analysis", "data", "completed_analysis.rda"))
-# source(here("Analysis Programs", "Figures", "manuscript_figs.r"))
+
+# Source analysis_report.R (the R code from analysis_report.Rmd) to allow this document to have access to  all analyses necessary for manuscript.
+source(here::here("analysis", "analysis_report.R"))
+
 # use this to allow custom decimal places later on
 op = function(x, d=2) sprintf(paste0("%1.",d,"f"), x) 
 ```
 
-```{r analysis-preferences}
+```{r analysis-preferences, echo=FALSE}
 # Seed for random number generation
 set.seed(42)
 knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
@@ -100,7 +102,7 @@ The task was based on that used by @Gaspelin2016 and Pearson et al. [-@Pearson20
 
 [^1]: This aspect of our design differs from that of @Gaspelin2016. In their study, for half of participants in the feature search condition the target was always a circle, and for other participants the target was always a diamond. By contrast, for the singleton search condition, for all participants the target was a circle among diamonds on some trials, and a diamond among circles on others. That is, target identity (circle/diamond) was manipulated between-subjects for the feature search condition, and within-subjects for the singleton search condition. In the current study, we equated the two conditions by varying target identity within-subjects for all participants. This ensured that any difference between the two search conditions was driven by a difference in the specificity of participants’ target template and not by a difference in participants’ history of selecting the target shape [e.g., @Maljkovic1994].
 
-```{r methodFig, fig.align='center', fig.cap = '(ref:methodFig)', out.width='100%'}
+```{r methodFig, echo=FALSE, fig.align='center', fig.cap='(ref:methodFig)', fig.pos="!h", out.width='80%'}
 knitr::include_graphics(here("analysis", "figures", "Methods_fig.png"), dpi = 300)
 
 ```
@@ -133,7 +135,7 @@ Statistical analyses were conducted in `r cite_r()` with the afex package  [@R-a
 ## Reward Omissions
 Figure \@ref(fig:OmissionPlot) displays the percentage of trials on which a reward omission was triggered by the participant looking at the singleton distractor, across search conditions and trial types, averaged across all trial-blocks.
 
-```{r OmissionPlot, fig.align='center', fig.cap = '(ref:omissions)', out.width='100%'}
+```{r OmissionPlot, echo=FALSE, fig.align='center', fig.cap = '(ref:omissions)', out.width='60%', fig.pos = "!h"}
 knitr::include_graphics(here("analysis", "figures", "omission_plot.png"), dpi = 300)
 
 ```
@@ -144,7 +146,7 @@ ANOVA analysis of the percentage of reward omissions with factors of trial type 
 ### Effect of physical salience.
 ANOVA analysis of the percentage of reward omissions revealed a non-significant main effect of trial type (low-reward vs distractor-absent), `r apa_print.afex_aov(omissions_salience.ANOVA, mse = F, es = "pes")$full_result$dType`, and a significant main effect of search condition (singleton search vs feature search), `r apa_print.afex_aov(omissions_salience.ANOVA, mse = F, es = "pes")$full_result$condition`. Critically, this main effect was qualified by a significant trial type $\times$ search condition interaction, `r apa_print.afex_aov(omissions_salience.ANOVA, mse = F, es = "pes")$full_result$condition_dType`, indicating that the effect of physical salience on overt attentional capture differed across search conditions. Paired-samples *t*-tests revealed that participants in the singleton search condition triggered significantly more reward omissions on trials that contained a colour-singleton distractor than those that did not, `r apa_print(singleton_physicalsalience_omissions.ttest)$statistic`, $d_z=$ `r singleton_physicalsalience_omissions.es`, suggesting that overt attention was captured by the physically salient singleton. In contrast, participants in the feature search condition triggered fewer reward omissions on trials containing a colour-singleton distractor than trials with no coloured singleton, `r apa_print(feature_physicalsalience_omissions.ttest)$statistic`, $d_z=$ `r feature_physicalsalience_omissions.es`, suggesting that overt attention to the singleton distractor was suppressed under conditions promoting feature search, consistent with previous findings [@Gaspelin2016].
 
-```{r SaccadePlot, fig.align='center', fig.cap = '(ref:saccadeFig)', out.width='100%'}
+```{r SaccadePlot, echo=FALSE, fig.align='center', fig.cap = '(ref:saccadeFig)', out.width='80%', fig.pos = "!h"}
 knitr::include_graphics(here("analysis", "figures", "saccade_plot.png"), dpi = 300)
 
 ```
@@ -156,7 +158,7 @@ Figure \@ref(fig:SaccadePlot) shows the percentage of first saccades directed to
 
 Next we tested whether overt attention to each distractor type was captured or suppressed in each search condition. Planned one-sample *t*-tests showed that capture scores were significantly greater than zero (indicating that overt attention was captured by the high-reward singleton) under conditions promoting singleton search, `r apa_print(Singleton_high.ttest)$statistic`, $d_z=$ `r Singleton_high.es`, as well as feature search, `r apa_print(Feature_high.ttest)$statistic`, $d_z=$ `r Feature_high.es`. For the low-reward distractor, there was a non-significant numerical trend towards capture in the singleton search condition, `r apa_print(Singleton_low.ttest)$statistic`, $d_z=$ `r Singleton_low.es`. In contrast, for the feature search condition, capture score was significantly below zero, `r apa_print(Feature_low.ttest)$statistic`, $d_z=$ `r Feature_low.es`, indicating that overt attention to the low-reward singleton was suppressed. Thus, in line with previous findings [@Gaspelin2016], our data suggest that overt attention to physically salient singletons can be suppressed when participants are encouraged to adopt a specific target template. However, singletons that have been associated with high reward capture overt attention, regardless of participants' target template and despite such capture being directly counterproductive to earning reward.
 
-```{r blockPlot, fig.align='center', fig.cap = '(ref:blockFig)', out.width='100%'}
+```{r blockPlot, echo=FALSE, fig.align='center', fig.cap = '(ref:blockFig)', out.width='60%', fig.pos = "!h"}
 knitr::include_graphics(here("analysis", "figures", "capture_plot_by_block.png"), dpi = 300)
 
 ```
@@ -166,7 +168,7 @@ Recent research suggests that attentional suppression develops over the course o
 
 
 
-```{r VincentizedPlot, fig.align='center', fig.cap = '(ref:vincentizedFig)', out.width='100%'}
+```{r VincentizedPlot, echo=FALSE, fig.align='center', fig.cap = '(ref:vincentizedFig)', out.width='60%',fig.pos = "!h"}
 knitr::include_graphics(here("analysis", "figures", "vincentized_plot.png"), dpi = 300)
 
 ```
@@ -202,7 +204,7 @@ As mentioned previously, attentional capture by stimuli associated with monetary
 \newpage
 
 # References
-```{r create_r-references}
+```{r create_r-references, echo=FALSE}
 r_refs(file = "r-references.bib")
 ```
 
