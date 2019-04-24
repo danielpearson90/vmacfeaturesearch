@@ -11,13 +11,13 @@ This repository contains data files that have been derived from the raw eye-trac
 
 Our pre-print is online here:
 
-> Pearson, D., Watson, P., Cheng, P., Most, S. (2019). *Overt attentional capture by reward-related stimuli overcomes inhibitory suppression*. Name of journal/book, Accessed 24 Apr 2019. Online at <https://doi.org/xxx/xxx>
+> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). *Overt attentional capture by reward-related stimuli overcomes inhibitory suppression*. Name of journal/book, Accessed 24 Apr 2019. Online at <https://doi.org/xxx/xxx>
 
 ### How to cite
 
 Please cite this compendium as:
 
-> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019. Investigating attentional suppression of reward-related distractors. Retrieved from <https://osf.io/yrdzv>
+> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). Investigating attentional suppression of reward-related distractors. Retrieved from <https://osf.io/yrdzv>
 
 ### How to download or install
 
