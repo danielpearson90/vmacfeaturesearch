@@ -8,3 +8,4 @@
 analysis
 ^Dockerfile$
 ^circle\.yml$
+^\.travis\.yml$

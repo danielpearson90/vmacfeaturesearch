@@ -16,7 +16,8 @@ RUN . /etc/environment \
 
   # build this compendium package
   && R -e "devtools::install('/vmacfeaturesearch', dep=TRUE)" \
+  && R -e "devtools::install_github('thomasp85/patchwork', dep=TRUE)" \
 
  # render the manuscript into a docx, you'll need to edit this if you've
  # customised the location and name of your main Rmd file
-  && R -e "rmarkdown::render('/vmacfeaturesearch/nalysis/analysis_report.rmd')"
+  && R -e "rmarkdown::render('/vmacfeaturesearch/analysis/analysis_report.rmd', output_format = 'html_document')"
