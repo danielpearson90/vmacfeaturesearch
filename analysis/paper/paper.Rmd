@@ -10,7 +10,7 @@ author:
     email         : "d.pearson@unsw.edu.au"
   - name          : "Poppy Watson"
     affiliation   : "1"
-  - name          : "Phillip Cheng"
+  - name          : "Phillip (Xin) Cheng"
     affiliation   : "2"
   - name          : "Mike E. Le Pelley"
     affiliation   : "1"
@@ -19,7 +19,7 @@ affiliation:
   - id            : "1"
     institution   : "School of Psychology, UNSW Sydney"
   - id            : "2"
-    institution   : "Department of Psychology, Macquarie University"
+    institution   : "Department of Cognitive Science, Macquarie University"
 
 authornote: |
   **Conflict of interest:** The authors declare no conflict of interest.
@@ -47,7 +47,7 @@ header-includes:
 
 documentclass     : "apa6"
 classoption       : "man, a4paper, noextraspace, 11pt"
-output            : papaja::apa6_docx
+output            : papaja::apa6_pdf
 nocite: |
  
 
@@ -128,7 +128,8 @@ For the analysis of reward omissions, we were particularly interested in two con
 
 For the analysis of saccade direction, we were primarily interested in the difference between the percentage of trials on which first saccades were directed towards the singleton distractor and the mean of both nonsingleton distractors across high- and low-reward trials. These data were converted into a *capture score* by subtracting the percentage of trials where the first saccade was directed towards the average nonsingleton from the percentage of trials where the first saccade was directed towards the singleton. A positive capture score indicated that gaze was more likely to have been directed towards the singleton than the average nonsingleton (i.e., the singleton had captured overt attention), whereas a negative capture score indicated that gaze was more likely to be directed toward the average nonsingleton than the singleton (overt attention to the singleton was suppressed). A 2 $\times$ 2 mixed ANOVA was used to compare capture scores for high- and low-reward trials across search conditions. In addition to any group differences in the patterns of attentional capture and/or suppression across trial type, we were also interested in directly investigating whether attention was captured by the singleton distractor (capture score $>0$), or whether attention to the singleton was suppressed (capture score $<0$) for each trial type $\times$ search condition combination. We therefore tested the capture score for each trial type and search condition with planned one-sample *t*-tests against zero.
 
-Statistical analyses were conducted in `r cite_r()` with the afex package  [@R-afex] used to calculate ANOVAs and the emmeans package [@R-emmeans] for follow-up contrasts. Greenhouse-Geisser corrections are reported where appropriate. In cases where a conclusion is drawn on the basis of a null effect, we report the Bayes factor that corresponds to a Bayesian *t*-test using the default Cauchy prior, conducted using the BayesFactor package [@R-BayesFactor]. Experiment scripts, raw data, and a reproducible research compendium of analysis scripts [@marwick2018] are available at https://osf.io/yrdzv/.
+Statistical analyses were conducted in `r cite_r()` with the afex package  [@R-afex] used to calculate ANOVAs and the emmeans package [@R-emmeans] for follow-up contrasts. Greenhouse-Geisser corrections are reported where appropriate. In cases where a conclusion is drawn on the basis of a null effect, we report the Bayes factor that corresponds to a Bayesian *t*-test using the default Cauchy prior, conducted using the BayesFactor package [@R-BayesFactor]. Bayes
+factors are interpreted in line with the guidelines suggested by @Jeffreys1961. Experiment scripts, raw data, and a reproducible research compendium of analysis scripts [@marwick2018] are available at https://osf.io/yrdzv/.
 
 # Results
 
