@@ -1,13 +1,13 @@
----
-title: "Analysis Report"
-author: "Daniel Pearson"
-date: "18 April 2019"
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-
-```{r setup, include=FALSE, echo=FALSE}
+#' ---
+#' title: "Analysis Report"
+#' author: "Daniel Pearson"
+#' date: "18 April 2019"
+#' output: html_document
+#' editor_options: 
+#'   chunk_output_type: console
+#' ---
+#' 
+## ----setup, include=FALSE, echo=FALSE------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 options(knitr.duplicate.label = 'allow')
 library(tidyverse)
@@ -22,15 +22,15 @@ library(hrbrthemes)
 library(ggsignif)
 library(summarytools)
 
-#st_options(bootstrap.css     = FALSE,       # Already part of the theme so no need for it
-#           plain.ascii       = FALSE,       # One of the essential settings
-#           style             = "rmarkdown", # Idem.
-#           dfSummary.silent  = TRUE,        # Suppresses messages about temporary files
-#           footnote          = NA,          # Keeping the results minimalistic
-#           subtitle.emphasis = FALSE)       # For the vignette theme, this gives
+st_options(bootstrap.css     = FALSE,       # Already part of the theme so no need for it
+           plain.ascii       = FALSE,       # One of the essential settings
+           style             = "rmarkdown", # Idem.
+           dfSummary.silent  = TRUE,        # Suppresses messages about temporary files
+           footnote          = NA,          # Keeping the results minimalistic
+           subtitle.emphasis = FALSE)       # For the vignette theme, this gives
                                             # much better results. Your mileage may vary.
 
-# st_css()
+st_css()
 
 library(knitr)
 opts_chunk$set(comment=NA, prompt=FALSE, cache=FALSE, echo=TRUE, results='asis')
@@ -56,19 +56,19 @@ my_theme <- theme_ipsum_rc(grid = F, axis_title_just = "c", axis_title_size = 14
         legend.text = element_text(size = 14),
         legend.title = element_text(size = 14))
 
-```
 
-# Omission Trial Analysis
-
-```{r Load Behavioural Data, include=FALSE}
+#' 
+#' # Omission Trial Analysis
+#' 
+## ----Load Behavioural Data, include=FALSE--------------------------------
 files <- dir(path = here::here("analysis", "data", "raw_data", "BehavData"), pattern = "*.mat")
 
 filedata <- here::here("analysis", "data", "raw_data", "BehavData", files) %>%
   map(readMat) %>%
   map("DATA")
-```
 
-```{r Tidy Behavioural Data, include = FALSE}
+#' 
+## ----Tidy Behavioural Data, include = FALSE------------------------------
 #This is some messy code that lets us tidy the exptTrialInfo data from the nested .mat struct files
 
 subNums <- filedata %>%
@@ -129,10 +129,10 @@ exptdata <- exptdata %>%
 exptdata <- exptdata %>% 
   mutate(gender = tolower(gender)) %>% 
   mutate(dType = factor(distractType, levels = c(1,2,3), labels = c("High", "Low", "Absent")))
-```
 
-We first removed participants who had poor gaze data (mean proportion of valid gaze samples during the fixation or trial period < .5).
-```{r Remove participants with poor gaze data}
+#' 
+#' We first removed participants who had poor gaze data (mean proportion of valid gaze samples during the fixation or trial period < .5).
+## ----Remove participants with poor gaze data-----------------------------
 propCutoff <- .5
 allTracks <- exptdata %>%
   group_by(sub) %>%
@@ -150,11 +150,11 @@ allTracks_summ <- allTracks %>%
 
 exptdata <- exptdata %>%
  filter(!sub %in% poortracks$sub)
-```
 
-`r length(poortracks)` participants were removed due to having a poor quality eye gaze data.
-
-```{r Remove participants for any other reasons}
+#' 
+#' `r length(poortracks)` participants were removed due to having a poor quality eye gaze data.
+#' 
+## ----Remove participants for any other reasons---------------------------
 
 remove_p_numbers <- c(37)
 
@@ -171,13 +171,13 @@ remove_p_numbers <- c(remove_p_numbers, didNotComplete$sub)
 
 exptdata <- exptdata %>%
   filter(!sub %in% remove_p_numbers)
-```
 
-During a post-experiment debrief, participant #37 reported that they thought that they needed to look at the coloured circle in order to earn rewards, and so they were removed from the data set.
-
-Then we removed the first two trials of the experiment, the first two trials after breaks, and timeouts from the data (in line with previous VMAC analysis protocols, e.g. Le Pelley et al, 2015 - __JEP:General__).
-
-```{r Additional data exclusions}
+#' 
+#' During a post-experiment debrief, participant #37 reported that they thought that they needed to look at the coloured circle in order to earn rewards, and so they were removed from the data set.
+#' 
+#' Then we removed the first two trials of the experiment, the first two trials after breaks, and timeouts from the data (in line with previous VMAC analysis protocols, e.g. Le Pelley et al, 2015 - __JEP:General__).
+#' 
+## ----Additional data exclusions------------------------------------------
 # first we determine the percentage of trials that were timeouts (for reporting in the MS)
 hardtimeouts <- exptdata %>%
   group_by(timeout) %>%
@@ -187,17 +187,17 @@ hardtimeouts <- exptdata %>%
 exptdata <- exptdata %>%
   filter(trial > 2 & trials_since_break > 2) %>% #removing first two trials and trials after breaks
   filter(timeout != 1) # removing timeouts
-```
 
-This is the data set that we are left with:
-
-```{r Glimpse exptdata after exclusions}
+#' 
+#' This is the data set that we are left with:
+#' 
+## ----Glimpse exptdata after exclusions-----------------------------------
 print(dfSummary(exptdata, style = "grid", graph.magnif = 0.75, tmp.img.dir = "/tmp"),  max.tbl.height = 300, method = "render")
-```
 
-Key for each of the variables in the table:
-
-```{r table2, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+#' 
+#' Key for each of the variables in the table:
+#' 
+## ----table2, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'----
 tabl <- "
 | Variable name | Explanation                                  |
 |---------------|--------------------------------------------|
@@ -229,10 +229,10 @@ tabl <- "
 | dType  | Distractor type (1 - high, 2 - low, 3 - absent)  |
 "
 cat(tabl) # output the table in a format good for HTML/PDF/docx conversion
-```
 
-## Omission Trials
-```{r Omission Trial Means, message=FALSE, warning=FALSE}
+#' 
+#' ## Omission Trials
+## ----Omission Trial Means, message=FALSE, warning=FALSE------------------
 # Calculate mean proportion of omission trials for each trial type, by participant
 exptdata_means_byparticipant <- exptdata %>%
   ungroup() %>%
@@ -242,11 +242,11 @@ exptdata_means_byparticipant <- exptdata %>%
 # Calculate mean proportion of omission trials for each trial type, by condition
 exptdata_means_bycondition <- summarySEwithin2(data = exptdata_means_byparticipant, measurevar = "m", betweenvars = "condition", withinvars = "dType", idvar = "sub") %>%
   select(-ends_with("Normed"))
-```
 
-Draw a graph of omission trials for each condition:
-
-```{r Omission Trial Graph, fig.height=10, fig.width=5.5, message=FALSE, warning=FALSE, echo=FALSE}
+#' 
+#' Draw a graph of omission trials for each condition:
+#' 
+## ----Omission Trial Graph, fig.height=10, fig.width=5.5, message=FALSE, warning=FALSE, echo=FALSE----
 omissionPlot_singleton <- exptdata %>%
   filter(condition == "Singleton Search") %>%
   group_by(sub, dType) %>%
@@ -289,19 +289,19 @@ save_plot(here::here("analysis", "figures", "omission_plot.png"), omissionPlot_m
 
 omissionPlot_ms
 
-```
 
-### Effect of Reward
-Effect of reward ANOVA:
-```{r Effect of Reward - Omissions}
+#' 
+#' ### Effect of Reward
+#' Effect of reward ANOVA:
+## ----Effect of Reward - Omissions----------------------------------------
 omissions_vmac.ANOVA <- aov_car(m ~ condition*dType + Error(sub/dType), data = filter(exptdata_means_byparticipant, dType != "Absent"), anova_table = list(es="pes"))
 
 knitr::kable(nice(omissions_vmac.ANOVA))
-```
 
-
-Planned t-tests:
-```{r Effect of Reward - Omissions - Planned t-tests, results="markup"}
+#' 
+#' 
+#' Planned t-tests:
+## ----Effect of Reward - Omissions - Planned t-tests, results="markup"----
 singleton_high_omissions <- exptdata_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Singleton Search") %>%
@@ -367,19 +367,19 @@ vmac_feature <- exptdata_means_byparticipant %>%
 
 vmac_condition_bayes <- ttestBF(x = vmac_singleton, y = vmac_feature)
 vmac_condition_bayes
-```
 
-
-### Effect of Physical Salience
-Effect of physical salience ANOVA:
-```{r Effect of Physical Salience - Omissions}
+#' 
+#' 
+#' ### Effect of Physical Salience
+#' Effect of physical salience ANOVA:
+## ----Effect of Physical Salience - Omissions-----------------------------
 omissions_salience.ANOVA <- aov_car(m ~ condition*dType + Error(sub/dType), data = filter(exptdata_means_byparticipant, dType != "High"), anova_table = list(es="pes"))
 
 knitr::kable(nice(omissions_salience.ANOVA))
-```
 
-Planned t-tests:
-```{r Effect of Physical Salience - Omissions - Planned t-tests, results="markup"}
+#' 
+#' Planned t-tests:
+## ----Effect of Physical Salience - Omissions - Planned t-tests, results="markup"----
 singleton_physicalsalience_omissions.ttest <- t.test(singleton_low_omissions, singleton_absent_omissions, paired = T)
 singleton_physicalsalience_omissions.ttest
 singleton_physicalsalience_omissions.es <- dz_calculator(singleton_low_omissions, singleton_absent_omissions)
@@ -389,11 +389,11 @@ feature_physicalsalience_omissions.ttest <- t.test(feature_absent_omissions, fea
 feature_physicalsalience_omissions.ttest
 feature_physicalsalience_omissions.es <- dz_calculator(feature_low_omissions, feature_absent_omissions)
 feature_physicalsalience_omissions.es
-```
 
-# Gaze Data Analyses
-
-```{r Load Gaze Data, include=FALSE}
+#' 
+#' # Gaze Data Analyses
+#' 
+## ----Load Gaze Data, include=FALSE---------------------------------------
 saccade_files <- dir(path = here::here("analysis", "data", "derived_data","ProcessedSaccadeData"), pattern = "^S")
 
 saccade_filedata <- here::here("analysis", "data", "derived_data","ProcessedSaccadeData", saccade_files) %>%
@@ -402,9 +402,9 @@ saccade_filedata <- here::here("analysis", "data", "derived_data","ProcessedSacc
   map(1) %>%
   map(2) %>%
   modify(as.data.frame)
-```
 
-```{r Tidy Gaze Data, include = FALSE}
+#' 
+## ----Tidy Gaze Data, include = FALSE-------------------------------------
 # collapse the data into a dataframe format
 saccade_filedata <- saccade_filedata %>%
   map_df(bind_rows)
@@ -434,15 +434,15 @@ saccadedata <- left_join(exptdata, saccade_filedata, by = c("sub" = "subj", "tri
   mutate(saccade_to_singleton = replace(saccade_to_singleton, saccade_to_singleton == 2, NA)) %>%
   mutate(saccade_to_nonsingleton = if_else((dType != "Absent" & targetLoc != first_saccade_loc & distractLoc != first_saccade_loc & first_saccade_loc < 5) | (dType == "Absent" & targetLoc != first_saccade_loc & first_saccade_loc < 5), 1, 0)) %>% # or non-singleton
   mutate(num_nonsingletons = if_else(dType == "Absent", 3, 2)) # add the number of nonsingletons for each trial type
-```
 
-```{r Glimpse saccadedata}
+#' 
+## ----Glimpse saccadedata-------------------------------------------------
 print(dfSummary(saccadedata, style = "grid", graph.magnif = 0.75, tmp.img.dir = "/tmp"),  max.tbl.height = 300, method = "render")
-```
 
-Key for each of the new variables in saccadedata data frame:
-
-```{r table3, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+#' 
+#' Key for each of the new variables in saccadedata data frame:
+#' 
+## ----table3, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'----
 tabl2 <- "
 | Variable name | Explanation                                  |
 |---------------|--------------------------------------------|
@@ -459,10 +459,10 @@ tabl2 <- "
 | num_nonsingletons         | The number of non-singleton distractors in the display (2 on high and low trials, 3 on distractor absent trials)     |
 "
 cat(tabl2) # output the table in a format good for HTML/PDF/docx conversion
-```
 
-## First saccade direction
-```{r First saccade direction - means, warning=FALSE, message=FALSE}
+#' 
+#' ## First saccade direction
+## ----First saccade direction - means, warning=FALSE, message=FALSE-------
 # calculate summary statistics for each participant
 saccadeData_means_byparticipant <- saccadedata %>%
   ungroup() %>%
@@ -504,11 +504,11 @@ captureData_means_byparticipant <- saccadeData_means_byparticipant %>%
   
 captureMeans <- summarySEwithin2(captureData_means_byparticipant, measurevar = "Capture", betweenvars = "condition", withinvars = "dType", idvar = "sub") %>%
   select(-ends_with("Normed"))
-```
 
-Graph of the first saccade data and capture scores:
-
-```{r First Saccade Direction - Plot, echo=FALSE, fig.height=10, fig.width=10, message=FALSE, warning=FALSE}
+#' 
+#' Graph of the first saccade data and capture scores:
+#' 
+## ----First Saccade Direction - Plot, echo=FALSE, fig.height=10, fig.width=10, message=FALSE, warning=FALSE----
 saccadePlot_singleton <- saccadeData_means_bycondition %>%
   filter(condition == "Singleton Search", dType != "Absent") %>%
   ggplot(aes(group = dType, y = proportionSaccades, fill = dType, x = stimType, shape = dType, colour = dType)) +
@@ -596,10 +596,10 @@ saccadePlot_ms <- saccadePlot_ms_row1 / legend_saccade / saccadePlot_ms_row2 + p
 save_plot(here("analysis", "figures", "saccade_plot.png"), saccadePlot_ms, ncol = 2, nrow = 2, type = "cairo", base_aspect_ratio = .9, dpi = 300)
 
 saccadePlot_ms
-```
 
-
-```{r First Saccade Direction - Capture ANOVA, results="markup", message = FALSE}
+#' 
+#' 
+## ----First Saccade Direction - Capture ANOVA, results="markup", message = FALSE----
 capture.ANOVA <- aov_car(Capture ~ condition*dType + Error(sub/dType), data = captureData_means_byparticipant,  anova_table = list(es="pes"))
 
 knitr::kable(nice(capture.ANOVA))
@@ -615,9 +615,9 @@ capture_bayes <- ttestBF(x = captureData_wide$vmac[captureData_wide$condition ==
 
 capture_bayes
 
-```
 
-```{r First Saccade Direction - Planned t-tests, results = "markup"}
+#' 
+## ----First Saccade Direction - Planned t-tests, results = "markup"-------
 Singleton_high.ttest <- captureData_means_byparticipant %>%
   ungroup() %>%
   filter(condition == "Singleton Search") %>%
@@ -699,11 +699,11 @@ Feature_low.es <- captureData_means_byparticipant %>%
   pull(d_z)
 
 Feature_low.es
-```
 
-## Development of suppression/capture effect across blocks
-
-```{r Block Analysis Data Tidying}
+#' 
+#' ## Development of suppression/capture effect across blocks
+#' 
+## ----Block Analysis Data Tidying-----------------------------------------
 saccadeData_means_byparticipant_byblock <- 
   saccadedata %>%
   mutate(sub = as.factor(sub), newblock = ceiling(as.numeric(block)/2)) %>%
@@ -717,9 +717,9 @@ saccadeData_means_byparticipant_byblock <-
 
 capturemeans_byblock <- summarySEwithin2(data = saccadeData_means_byparticipant_byblock, measurevar = "capture", betweenvars = "condition", withinvars = c("dType", "newblock"), idvar = "sub", na.rm = T) %>%
   select(-ends_with("Normed"))
-```
 
-```{r Block Analysis Graph, echo=FALSE, fig.height=10, fig.width=5, message=FALSE, warning=FALSE}
+#' 
+## ----Block Analysis Graph, echo=FALSE, fig.height=10, fig.width=5, message=FALSE, warning=FALSE----
 capturePlot_byblock_singleton <- 
   capturemeans_byblock %>%
   filter(condition == "Singleton Search") %>%
@@ -774,9 +774,9 @@ capturePlot_byblock_vert
 save_plot(here("analysis", "figures","capture_plot_by_block.png"), capturePlot_byblock_vert, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
 
 
-```
 
-```{r Block Analysis Statistics}
+#' 
+## ----Block Analysis Statistics-------------------------------------------
 capture_byblock.ANOVA <- aov_car(capture ~ newblock*dType*condition + Error(sub/newblock*dType), data = saccadeData_means_byparticipant_byblock, anova_table = list(es="pes"))
 
 knitr::kable(nice(capture_byblock.ANOVA))
@@ -788,13 +788,13 @@ capture_byblock.polys <- summary(contrast(ref_all, method = "poly")) %>%
          df = round(df, digits = 0))
 
 knitr::kable(capture_byblock.polys)
-```
 
-## Vincentized Analysis
-
-This analysis looks at the percentage of trials captured/suppressed by each distractor as a function of saccade latency.
-
-```{r Vincentized Analysis - Data Tidying}
+#' 
+#' ## Vincentized Analysis
+#' 
+#' This analysis looks at the percentage of trials captured/suppressed by each distractor as a function of saccade latency.
+#' 
+## ----Vincentized Analysis - Data Tidying---------------------------------
 quartiles_cutoffs <- saccadedata %>%
   group_by(sub, dType, condition) %>%
   summarise(q1 = quantile(latency, probs = .25, na.rm = T), q2 = quantile(latency, probs = .5, na.rm = T), q3 = quantile(latency, probs = .75, na.rm = T), q4 = quantile(latency, probs = 1, na.rm = T))
@@ -835,9 +835,9 @@ saccade_direction_quartiles_means_byparticipant <- saccadedata %>%
 saccade_direction_quartiles_means_bycondition <- summarySEwithin2(saccade_direction_quartiles_means_byparticipant, measurevar = "capture", betweenvars = "condition", withinvars = c("dType", "quartile"), idvar = "sub") %>%
   select(-ends_with("Normed")) %>%
   left_join(., saccade_latency_quartiles_means_bycondition, by = c("dType", "condition", "quartile"), suffix = c(".prop", ".latency"))
-```
 
-```{r Vincentized Analysis - Graph, echo=FALSE, warning=FALSE, fig.height=10, fig.width=5, message=FALSE}
+#' 
+## ----Vincentized Analysis - Graph, echo=FALSE, warning=FALSE, fig.height=10, fig.width=5, message=FALSE----
 
 vincentized_annotations <- c("***"," "," "," ","**"," "," "," ","***"," "," "," ","***"," "," ","")
 
@@ -903,9 +903,9 @@ vincentizedPlot_ms <- vincentizedPlot_singleton + plot_spacer() + legend_saccade
 save_plot(here("analysis","figures","vincentized_plot.png"), vincentizedPlot_ms, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
 
 vincentizedPlot_ms
-```
 
-```{r Vincentized Analysis - Statistics, results="markup"}
+#' 
+## ----Vincentized Analysis - Statistics, results="markup"-----------------
 vincentized_singleton_high_q1.ttest <- saccade_direction_quartiles_means_byparticipant%>%
   ungroup() %>%
   filter(condition == "Singleton Search", dType == "High", quartile == 1) %>%
@@ -981,11 +981,6 @@ vincentized_feature_low_q1.es <- saccade_direction_quartiles_means_byparticipant
   pull(d_z)
 
 vincentized_feature_low_q1.es
-```
 
-
-```{r, echo=FALSE, message=FALSE, results='hide', purl=FALSE}
-input  = knitr::current_input()  # filename of input document
-output = paste(tools::file_path_sans_ext(input), 'R', sep = '.')
-knitr::purl(input,output,documentation=2,quiet=T)
-```
+#' 
+#' 
