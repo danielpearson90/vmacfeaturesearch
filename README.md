@@ -23,7 +23,7 @@ Please cite this compendium as:
 
 You can download the compendium as a zip from from this URL: <https://github.com/danielpearson90/vmacfeaturesearch/archive/master.zip>
 
-Once you have downloaded and extracted the compendium, you can open [the project](vmacfeaturesearch.Rproj) with RStudio, and knit [analysis\_report.Rmd](analysis/analysis_report.Rmd) to produce a report containing all statistical analyses contained in our preprint. You can also knit [paper.Rmd](analysis/paper/paper.Rmd) to produce a reproducible copy of the preprint.
+Once you have downloaded and extracted the compendium, you can open [the project](vmacfeaturesearch.Rproj) with RStudio, and knit [analysis\_report.rmd](analysis/analysis_report.rmd) to produce a report containing all statistical analyses contained in our preprint. You can also knit [paper.Rmd](analysis/paper/paper.Rmd) to produce a reproducible copy of the preprint.
 
 This compendium is still a work in progress, with Docker integration planned for the future.
 
