@@ -134,6 +134,20 @@ reward-related stimuli, such as those seen in addiction.
 
 }
 
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{proposition}{Proposition}[section]
+\theoremstyle{definition}
+\newtheorem{example}{Example}[section]
+\theoremstyle{definition}
+\newtheorem{exercise}{Exercise}[section]
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{solution}{Solution}
 \begin{document}
 \maketitle
 
@@ -143,14 +157,14 @@ When we interact with the world, our visual attention system can
 prioritise important information. For example, when driving towards an
 intersection, we can selectively attend to a stop sign on a busy street.
 Sometimes, however, we may find that stimuli that are irrelevant to our
-current task may nevertheless capture our attention in a seemingly
-automatic and involuntary way (e.g., a flashing alert, or colourful
-billboard). Consistent with this framework, an influential view of
-attentional selection has drawn a distinction between two forms of
-attentional control: one that is volitional and goal directed (top-down
-control) and another that is automatic and stimulus driven (Yantis,
-2000). However, exactly how these two processes interact has been the
-subject of extensive debate.
+current task nevertheless capture our attention in a seemingly automatic
+and involuntary way (e.g., a flashing alert, or colourful billboard).
+Consistent with this framework, an influential view of attentional
+selection has drawn a distinction between two forms of attentional
+control: one that is volitional and goal directed (top-down control) and
+another that is automatic and stimulus driven (Yantis, 2000). However,
+exactly how these two processes interact has been the subject of
+extensive debate.
 
 Most models of attentional selection can be categorised into one of two
 opposing theoretical positions. \emph{Stimulus-driven} accounts argue
@@ -182,10 +196,10 @@ control of the allocation of attention. Evidence supporting the signal
 suppression hypothesis has largely come from the event-related potential
 (ERP) literature (for review, see Gaspelin \& Luck, 2019), however
 recent studies have demonstrated behavioural evidence of suppression in
-the context of overt attention (Gaspelin \& Luck, 2018a; i.e.,
-eye-movements: see Gaspelin, Leonard, \& Luck, 2017; Ipata, Gee,
-Gottlieb, Bisley, \& Goldberg, 2006) and covert attention (i.e., shifts
-of attention that are not accompanied by eye-movements: see Gaspelin,
+the context of overt attention (i.e., eye-movements: see Gaspelin \&
+Luck, 2018a; Gaspelin, Leonard, \& Luck, 2017; Ipata, Gee, Gottlieb,
+Bisley, \& Goldberg, 2006) and covert attention (i.e., shifts of
+attention that are not accompanied by eye-movements: see Gaspelin,
 Leonard, \& Luck, 2015).
 
 For example, across two experiments Gaspelin et al. (2017) had
@@ -406,7 +420,7 @@ exceeded the soft-timeout threshold (see below), the message
 
 \begin{figure}[!h]
 
-{\centering \includegraphics[width=0.8\linewidth]{E:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/Methods_fig} 
+{\centering \includegraphics[width=0.8\linewidth]{C:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/Methods_fig} 
 
 }
 
@@ -577,7 +591,7 @@ effect, we report the Bayes factor that corresponds to a Bayesian
 BayesFactor package (Morey \& Rouder, 2018). Bayes factors are
 interpreted in line with the guidelines suggested by Jeffreys (1961).
 Experiment scripts, raw data, and a reproducible research compendium of
-analysis scripts (Marwick, Boettiger, \& Mullen, 2018) are available at
+analysis scripts (Marwick, 2019) are available at
 \url{https://osf.io/yrdzv/}.
 
 \section{Results}\label{results}
@@ -591,7 +605,7 @@ across all trial-blocks.
 
 \begin{figure}[!h]
 
-{\centering \includegraphics[width=0.6\linewidth]{E:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/omission_plot} 
+{\centering \includegraphics[width=0.6\linewidth]{C:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/omission_plot} 
 
 }
 
@@ -660,7 +674,7 @@ consistent with previous findings (Gaspelin et al., 2017).
 
 \begin{figure}[!h]
 
-{\centering \includegraphics[width=0.8\linewidth]{E:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/saccade_plot} 
+{\centering \includegraphics[width=0.8\linewidth]{C:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/saccade_plot} 
 
 }
 
@@ -735,7 +749,7 @@ being directly counterproductive to earning reward.
 
 \begin{figure}[!h]
 
-{\centering \includegraphics[width=0.6\linewidth]{E:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/capture_plot_by_block} 
+{\centering \includegraphics[width=0.6\linewidth]{C:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/capture_plot_by_block} 
 
 }
 
@@ -778,7 +792,7 @@ the reward associated feature increased.
 
 \begin{figure}[!h]
 
-{\centering \includegraphics[width=0.6\linewidth]{E:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/vincentized_plot} 
+{\centering \includegraphics[width=0.6\linewidth]{C:/Users/Daniel/Google Drive/Research/vmacfeaturesearch/analysis/figures/vincentized_plot} 
 
 }
 
@@ -1213,10 +1227,9 @@ Den Brink, W., \& Hendriks, V. M. (2006). Attentional bias predicts
 heroin relapse following treatment. \emph{Addiction}, \emph{101},
 1306--1312. \url{https://doi.org/10.1111/j.1360-0443.2006.01498.x}
 
-\hypertarget{ref-marwick2018}{}
-Marwick, B., Boettiger, C., \& Mullen, L. (2018). Packaging data
-analytical work reproducibly using R (and friends), e3192v2.
-\url{https://doi.org/10.7287/peerj.preprints.3192v2}
+\hypertarget{ref-R-rrtools}{}
+Marwick, B. (2019). \emph{Rrtools: Creates a reproducible research
+compendium}. Retrieved from \url{https://github.com/benmarwick/rrtools}
 
 \hypertarget{ref-Morey2008}{}
 Morey, R. D. (2008). Confidence intervals from normalized data: A

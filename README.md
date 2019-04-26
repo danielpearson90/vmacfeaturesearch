@@ -11,7 +11,7 @@ This repository contains data files that have been derived from the raw eye-trac
 
 Our pre-print is online here:
 
-> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). *Overt attentional capture by reward-related stimuli overcomes inhibitory suppression*. Name of journal/book, Accessed 24 Apr 2019. Online at <https://doi.org/xxx/xxx>
+> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). *Overt attentional capture by reward-related stimuli overcomes inhibitory suppression*. Name of journal/book, Accessed 26 Apr 2019. Online at <https://doi.org/xxx/xxx>
 
 ### How to cite
 
@@ -22,6 +22,10 @@ Please cite this compendium as:
 ### How to download or install
 
 You can download the compendium as a zip from from this URL: <https://github.com/danielpearson90/vmacfeaturesearch/archive/master.zip>
+
+Once you have downloaded and extracted the compendium, you can open [the project](vmacfeaturesearch.Rproj) with RStudio, and knit [analysis\_report.Rmd](analysis/analysis_report.Rmd) to produce a report containing all statistical analyses contained in our preprint. You can also knit [paper.Rmd](analysis/paper/paper.Rmd) to produce a reproducible copy of the preprint.
+
+This compendium is still a work in progress, with Docker integration planned for the future.
 
 ### Licenses
 
