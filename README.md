@@ -11,7 +11,7 @@ This repository contains data files that have been derived from the raw eye-trac
 
 Our pre-print is online here:
 
-> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). *Overt attentional capture by reward-related stimuli overcomes inhibitory suppression*. Name of journal/book, Accessed 26 Apr 2019. Online at <https://doi.org/xxx/xxx>
+> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). *Overt attentional capture by reward-related stimuli overcomes inhibitory suppression*. PsyArXiv, Accessed 29 Apr 2019. Online at <https://doi.org/10.31234/osf.io/db9hg>
 
 ### How to cite
 

@@ -24,7 +24,7 @@ This repository contains data files that have been derived from the raw eye-trac
 
 Our pre-print is online here:
 
-> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). _`r Title`_. Name of journal/book, Accessed `r format(Sys.Date(), "%d %b %Y")`. Online at <https://doi.org/xxx/xxx>
+> Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). _`r Title`_. PsyArXiv, Accessed `r format(Sys.Date(), "%d %b %Y")`. Online at <https://doi.org/10.31234/osf.io/db9hg>
 
 
 ### How to cite
