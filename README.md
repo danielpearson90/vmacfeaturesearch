@@ -11,10 +11,6 @@ This repository contains the data and analysis code for our project
 investigating whether overt attention to reward-related distractors can
 be suppressed under feature search conditions.
 
-This repository contains data files that have been derived from the raw
-eye-tracker data. The raw eye-gaze files are very large and so are not
-stored here. They can be found at: <https://osf.io/yrdzv/>.
-
 Our pre-print is online here:
 
 > Pearson, D., Watson, P., Cheng, P., & Le Pelley, M. (2019). *Overt
@@ -30,20 +26,37 @@ Please cite this compendium as:
 > Investigating attentional suppression of reward-related distractors.
 > Retrieved from <https://osf.io/yrdzv>
 
-### How to download or install
+### Contents
 
-You can download the compendium as a zip from from this URL:
-<https://github.com/danielpearson90/vmacfeaturesearch/archive/master.zip>
+  - [:file\_folder: analysis](/analysis): Contains analysis report in R
+    Markdown format, as well as R script format.
+  - [:file\_folder: analysis/paper](/analysis/paper): R markdown source
+    document for the manuscript.
+  - [:file\_folder: analysis/data](/analysis/data): Data files that have
+    been dericed from the raw eye-tracker data. The raw eye-gaze files
+    are very large and so are not stored here. They can be found at:
+    <https://osf.io/yrdzv/>.
+  - [:file\_folder: analysis/figures](/analysis/figures): Figures
+    generated in the analysis.
 
-Once you have downloaded and extracted the compendium, you can open [the
-project](vmacfeaturesearch.Rproj) with RStudio, and knit
-[analysis\_report.rmd](analysis/analysis_report.rmd) to produce a report
-containing all statistical analyses contained in our preprint. You can
-also knit [paper.Rmd](analysis/paper/paper.Rmd) to produce a
-reproducible copy of the preprint.
+### Reproducibility
 
-This compendium is still a work in progress, with Docker integration
-planned for the future.
+This repository is organized as a reproducible research compendium.
+Click the ![Binder](https://mybinder.org/badge_logo.svg) button above to
+explore in an interactive RStudio session (this takes approximate 15-20
+mins to build). Binder uses
+[rocker-project.org](https://rocker-project.org) Docker images to ensure
+a consistent and reproducible computational environment. These Docker
+images can also be used locally.
+
+To explore the code locally, clone or download this repository into
+RStudio or your perferred environment and install the compendium by
+running `devtools::install(dep=TRUE)`.
+
+This compendium is checked by Travis-CI continuous integration. Click
+the ![Build
+Status](https://travis-ci.org/cboettig/noise-phenomena.svg?branch=master)
+button above for details.
 
 ### Licenses
 
