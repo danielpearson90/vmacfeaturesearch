@@ -7,4 +7,5 @@ RUN chown -R ${NB_USER} ${HOME}
 ## Become normal user again
 USER ${NB_USER}
 RUN wget https://github.com/danielpearson90/vmacfeaturesearch && \
-R -e "devtools::install_deps() devtools::install_github('thomasp85/patchwork')"
+R -e "devtools::install_deps()"
+RUN R -e "devtools::install_github('thomasp85/patchwork')"
