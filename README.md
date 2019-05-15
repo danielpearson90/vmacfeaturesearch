@@ -58,6 +58,10 @@ the ![Build
 Status](https://travis-ci.org/cboettig/noise-phenomena.svg?branch=master)
 button above for details.
 
+### Experimental Scripts
+
+MATLAB scripts for this project can be found at <https://github.com/danielpearson90/vmac_feature_suppression_program/>.
+
 ### Licenses
 
 **Text and figures :**
