@@ -1,0 +1,96 @@
+---
+title             : "Supplementary Materials to accompany \"Overt attentional capture by reward-related stimuli overcomes inhibitory suppression\""
+shorttitle        : "Supplementary Materials"
+
+author: 
+  - name          : "Daniel Pearson"
+    affiliation   : "1,2"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Institute of Cognitive Neuroscience, University College London, Gower Street, London WC1E 6BT, UK"
+    email         : "daniel.pearson@ucl.ac.uk"
+  - name          : "Poppy Watson"
+    affiliation   : "2"
+  - name          : "Phillip (Xin) Cheng"
+    affiliation   : "3"
+  - name          : "Mike E. Le Pelley"
+    affiliation   : "2"
+
+affiliation:
+  - id            : "1"
+    institution   : "Institute of Cognitive Neuroscience, University College London"
+  - id            : "2"
+    institution   : "School of Psychology, UNSW Sydney"
+  - id            : "3"
+    institution   : "Department of Cognitive Science, Macquarie University"
+
+authornote: 
+
+abstract:
+  
+bibliography      : ["r-references.bib", "mendeley.bib"]
+
+floatsintext      : yes
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : no
+mask              : no
+draft             : no
+csl               : "american-psychological-association-6th-edition_no_first_citation.csl"
+header-includes:
+  - \raggedbottom
+
+documentclass     : "apa6"
+classoption       : "man, a4paper, noextraspace, 11pt"
+output            : papaja::apa6_docx
+nocite: |
+ 
+
+
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+library(here)
+
+# Source analysis_report.R (the R code from analysis_report.Rmd) to allow this document to have access to  all analyses necessary for manuscript.
+source(here::here("analysis", "analysis_report.R"))
+
+
+# use this to allow custom decimal places later on
+op = function(x, d=2) sprintf(paste0("%1.",d,"f"), x) 
+```
+
+```{r analysis-preferences, echo=FALSE}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+# Analysis of questionnaire data
+After completing the visual search task, participants completed a brief questionnaire which assessed their knowledge of the colour--reward contingencies---i.e., which colour would be followed by high reward, and which colour would be followed by low reward; these relationships were explicitly instructed of at the start of the experiment---and of the omission contingency---i.e., that looking at either distractor would result in the omission of the reward that would otherwise be delivered; this was not explicitly instructed at the start of the experiment. For each distractor colour, participants were asked to indicate which reward value they would receive if they "quickly and accurately moving their eyes to the target" or "looked at the distractor before looking at the target" (out of the options: 0 points, 10 points, or 500 points). After making their choice, participants were asked to rate their confidence in their decision, from 1 ("Not at all confident") to 5 ("Very confident").
+
+These data were converted into a *contingency belief score* by multiplying their confidence rating by $+1$ if they selected the correct point value, or $-1$ if they selected either of the incorrect point values. For example, if a participant responded that they would receive 500 points for quickly and accurately moving their eyes to the target when a high-reward distractor was present in the display with a confidence of 4, their reward contingency belief score for this colour would be 4. If they responded that they would receive 10 points for looking at the high-reward distractor before looking at the target with a confidence of 3, their omission contingency belief score for this colour would be $-3$.
+
+```{r rewardContingencyPlot, echo=FALSE, fig.align='center', fig.cap = '(ref:rewardContingencyFig)', out.width='60%',fig.pos = "!h"}
+knitr::include_graphics(here("analysis", "figures", "reward_contingency_plot.png"), dpi = 300)
+
+```
+
+Figure \@ref(fig:rewardContingencyPlot) shows scatterplots of reward contingency belief scores against capture scores (calculated as described in the main text) on high- and low-reward trials. As expected, the vast majority of participants reported the correct point values that were associated with the high- (`r reward_awareness[reward_awareness$colour=="high",]$correct`/`r reward_awareness[reward_awareness$colour=="high",]$total`) and low-reward distractors (`r reward_awareness[reward_awareness$colour=="low",]$correct`/`r reward_awareness[reward_awareness$colour=="low",]$total`). Consistent with previous findings [@Pearson2015; see also @LePelleya], there was no significant relationship between participant's awareness of the colour--reward relationships and capture---high-reward: $r =$ `r remove_lz(high_reward_awareness.cor$estimate,3)`, `r apa_print.htest(high_reward_awareness.cor)$statistic`; low-reward: $r =$ `r remove_lz(low_reward_awareness.cor$estimate,3)`, `r apa_print.htest(low_reward_awareness.cor)$statistic`.
+
+```{r omissionContingencyPlot, echo=FALSE, fig.align='center', fig.cap = '(ref:omissionContingencyFig)', out.width='60%',fig.pos = "!h"}
+knitr::include_graphics(here("analysis", "figures", "omission_contingency_plot.png"), dpi = 300)
+
+```
+
+Figure \@ref(fig:omissionContingencyPlot) shows scatterplots of omission contingency belief scores against capture scores on high- and low-reward trials. The majority of participants did not accurately report the omission contingency for the high (`r omission_awareness[omission_awareness$colour=="high",]$correct`/`r omission_awareness[omission_awareness$colour=="high",]$total`) and low-reward distractors (`r omission_awareness[omission_awareness$colour=="low",]$correct`/`r omission_awareness[omission_awareness$colour=="low",]$total`). There was a significant positive correlation between participant's omission contingency belief score for the high-reward distractor and the degree to which their overt attention was captured by the high-reward distractor, $r =$ `r remove_lz(high_omission_awareness.cor$estimate,3)`, `r apa_print.htest(high_omission_awareness.cor)$statistic`, such that participants who confidently believed that looking at the high-reward distractor would trigger reward omission were more likely to have their gaze captured by the high-reward distractor. There was no significant correlation between omission contingency belief scores and capture for the low-reward distractor, $r =$ `r remove_lz(low_omission_awareness.cor$estimate,3)`, `r apa_print.htest(low_omission_awareness.cor)$statistic`.
+
+Consistent with previous research [@Pearson2015], these findings suggests that explicit awareness of the omission contingency does not allow participants to reduce the extent to which their gaze is captured by reward-associated distractors. Rather, it seems to suggest that explicit awareness of the omission contingencies counterproductively *increases* the extent to which gaze is captured by the high-reward distractor. This could be explained by an "attentional white bear" effect [@Cunningham2016; @Moher2012], where participants' attention is paradoxically drawn to items that have known non-target features. In other words, once participants learn that looking at the high-reward distractor will cause them to lose out on a high-value reward, they intentionally try to avoid looking at the high-reward distractor, which counterproductively causes them to look at the high-reward distractor more often. However, an alternative explanation is that the direction of causality is reversed---those who have had their gaze captured by the high-reward distractor more often have had more opportunity to learn about the omission contingency, and thus can report it more confidently at the end of the experiment. As the current findings are correlational in nature, we are unable to tease apart these two accounts. However, it is notable that previous research using an experimental manipulation of awareness of the omission contingency in the VMAC task found evidence to suggest that there was no difference in the size of the VMAC effect between those who were made aware of the omission contingency and those who were not made aware of the omission contingency [@Pearson2015]. 
+
+(ref:rewardContingencyFig) Scatterplot of capture scores (calculated as explained in main text) against reward contingency belief scores for high-reward (left panel) and low-reward (right panel) distractors.
+
+(ref:omissionContingencyFig) Scatterplot of capture scores against omission contingency belief scores for high-reward (left panel) and low-reward (right panel) distractors. *** $p <.001$.
+
+\newpage
+# References

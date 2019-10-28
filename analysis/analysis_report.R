@@ -22,22 +22,26 @@ library(hrbrthemes)
 library(ggsignif)
 library(summarytools)
 
-st_options(bootstrap.css     = FALSE,       # Already part of the theme so no need for it
-           plain.ascii       = FALSE,       # One of the essential settings
-           style             = "rmarkdown", # Idem.
-           dfSummary.silent  = TRUE,        # Suppresses messages about temporary files
-           footnote          = NA,          # Keeping the results minimalistic
-           subtitle.emphasis = FALSE)       # For the vignette theme, this gives
+afex_options(emmeans_model = "multivariate")
+
+#st_options(bootstrap.css     = FALSE,       # Already part of the theme so no need for it
+#           plain.ascii       = FALSE,       # One of the essential settings
+#           style             = "rmarkdown", # Idem.
+#           dfSummary.silent  = TRUE,        # Suppresses messages about temporary files
+#           footnote          = NA,          # Keeping the results minimalistic
+#           subtitle.emphasis = FALSE)       # For the vignette theme, this gives
                                             # much better results. Your mileage may vary.
 
-st_css()
+# st_css()
 
 library(knitr)
 opts_chunk$set(comment=NA, prompt=FALSE, cache=FALSE, echo=TRUE, results='asis')
 
 source(here::here("R", "dz_calculator.r"))
+source(here::here("R", "ds_calculator.r"))
 source(here::here("R", "vmac_pal.R"))
 source(here::here("R", "summarySEwithin2.r"))
+source(here::here("R", "remove_lz.R"))
 
 vmacCols <- vmac_pal()
 my_theme <- theme_ipsum_rc(grid = F, axis_title_just = "c", axis_title_size = 14, axis_text_size = 12, strip_text_size = 14, plot_title_size = 14, subtitle_size = 14, ticks = T) +
@@ -80,7 +84,23 @@ exptdata <- filedata %>%
   map(24) %>%
   map(2) %>%
   modify(as.data.frame)
-  
+
+awaredata <- filedata %>%
+  map(27)  %>% 
+  modify(as.data.frame)
+
+index_removed_awaredata <- which(sapply(awaredata, nrow) < 4)
+
+awaredata <- awaredata[-index_removed_awaredata]
+
+awaredata <- Map(cbind, awaredata, sub = subNums[-index_removed_awaredata]) %>% 
+  bind_rows()
+
+colnames(awaredata)[1:5] <- c("question_type", "trial_counter", "colour", "clicked_button", "confidence_rating")
+
+awaredata$question_type <- factor(awaredata$question_type, labels = c("to_target", "to_distractor"))
+awaredata$colour <- factor(awaredata$colour, labels = c("high", "low"))
+
 counterbals <- filedata %>%
   map(2) %>%
   flatten() %>%
@@ -130,6 +150,17 @@ exptdata <- exptdata %>%
   mutate(gender = tolower(gender)) %>% 
   mutate(dType = factor(distractType, levels = c(1,2,3), labels = c("High", "Low", "Absent")))
 
+#' 
+## ----Prepare data for repetition priming analysis------------------------
+exptdata <- exptdata %>%
+  mutate(singleton_present = case_when(distractType == 1 | distractType == 2 ~ 1,
+                                       TRUE ~ 0)) %>% 
+  mutate(singleton_repetition = case_when(singleton_present == lag(singleton_present) & distractType != 3 ~ 1,
+                                          TRUE ~ 0))
+
+
+#' 
+#' 
 #' 
 #' We first removed participants who had poor gaze data (mean proportion of valid gaze samples during the fixation or trial period < .5).
 ## ----Remove participants with poor gaze data-----------------------------
@@ -285,7 +316,7 @@ omissionPlot_feature <-
 
 omissionPlot_ms <- omissionPlot_singleton / omissionPlot_feature
 
-save_plot(here::here("analysis", "figures", "omission_plot.png"), omissionPlot_ms, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
+# save_plot(here::here("analysis", "figures", "omission_plot.png"), omissionPlot_ms, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
 
 omissionPlot_ms
 
@@ -390,6 +421,20 @@ feature_physicalsalience_omissions.ttest
 feature_physicalsalience_omissions.es <- dz_calculator(feature_low_omissions, feature_absent_omissions)
 feature_physicalsalience_omissions.es
 
+
+#' 
+#' Exploratory analyses following reviews:
+## ------------------------------------------------------------------------
+absent_singleton_vs_feature.ttest <- t.test(feature_absent_omissions, singleton_absent_omissions, var.equal = T)
+absent_singleton_vs_feature.ttest
+absent_singleton_vs_feature.es <- ds_calculator(feature_absent_omissions, singleton_absent_omissions)
+absent_singleton_vs_feature.es
+
+low_singleton_vs_feature.ttest <- t.test(singleton_low_omissions,feature_low_omissions, var.equal = T)
+low_singleton_vs_feature.ttest
+low_singleton_vs_feature.es <- ds_calculator(singleton_low_omissions, feature_low_omissions)
+
+#' 
 #' 
 #' # Gaze Data Analyses
 #' 
@@ -587,13 +632,13 @@ captureBarPlot_feature <-
   ylab("Capture Score") + xlab("Trial Type") + labs(tag = "D") +
   my_theme
 
-saccadePlot_ms_row1 <- saccadePlot_singleton + captureBarPlot_singleton + plot_spacer() + plot_layout(nrow = 1, widths = c(2,1,.1))
+saccadePlot_ms_row1 <- saccadePlot_singleton + captureBarPlot_singleton + plot_spacer() + plot_layout(nrow = 1, widths = c(2.2,1,.1))
 
 saccadePlot_ms_row2 <- saccadePlot_feature + captureBarPlot_feature + plot_spacer() + plot_layout(nrow = 1, widths = c(2,1,.1))
 
 saccadePlot_ms <- saccadePlot_ms_row1 / legend_saccade / saccadePlot_ms_row2 + plot_layout(heights = c(1,.1,1))
 
-save_plot(here("analysis", "figures", "saccade_plot.png"), saccadePlot_ms, ncol = 2, nrow = 2, type = "cairo", base_aspect_ratio = .9, dpi = 300)
+ # save_plot(here("analysis", "figures", "saccade_plot.png"), saccadePlot_ms, ncol = 2.2, nrow = 2, type = "cairo", base_aspect_ratio = .9, dpi = 300)
 
 saccadePlot_ms
 
@@ -647,6 +692,26 @@ Singleton_low.ttest <- captureData_means_byparticipant %>%
   t.test()
 
 Singleton_low.ttest
+
+Singleton_low.ttestBF_onesided <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "Low") %>%
+  select(Capture) %>%
+  pull() %>%
+  ttestBF(nullInterval = c(0,Inf))
+
+Singleton_low.ttestBF_directional <- Singleton_low.ttestBF_onesided[1]/Singleton_low.ttestBF_onesided[2]
+
+Singleton_low.ttestBF_onesided_2 <- captureData_means_byparticipant %>%
+  ungroup() %>%
+  filter(condition == "Singleton Search") %>%
+  filter(dType == "Low") %>%
+  select(Capture) %>%
+  pull() %>%
+  ttestBF(nullInterval = c(0,-Inf))
+
+1/Singleton_low.ttestBF_onesided_2
 
 Singleton_low.es <- captureData_means_byparticipant %>%
   ungroup() %>%
@@ -771,7 +836,7 @@ capturePlot_byblock_vert <- (capturePlot_byblock_singleton + plot_spacer() + plo
 
 capturePlot_byblock_vert
 
-save_plot(here("analysis", "figures","capture_plot_by_block.png"), capturePlot_byblock_vert, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
+# save_plot(here("analysis", "figures","capture_plot_by_block.png"), capturePlot_byblock_vert, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
 
 
 
@@ -900,7 +965,7 @@ legend_vincentizedPlot <- get_legend(vincentizedPlot_singleton + theme(legend.po
 
 vincentizedPlot_ms <- vincentizedPlot_singleton + plot_spacer() + legend_saccade + plot_spacer() + vincentizedPlot_feature + plot_spacer() + plot_layout(nrow = 3, ncol = 2, heights = c(1,.2,1), widths = c(1,.05))
 
-save_plot(here("analysis","figures","vincentized_plot.png"), vincentizedPlot_ms, ncol = 1, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
+# save_plot(here("analysis","figures","vincentized_plot.png"), vincentizedPlot_ms, ncol = 1.2, nrow = 2, type = "cairo", base_aspect_ratio = 1.1, dpi = 300)
 
 vincentizedPlot_ms
 
@@ -981,6 +1046,276 @@ vincentized_feature_low_q1.es <- saccade_direction_quartiles_means_byparticipant
   pull(d_z)
 
 vincentized_feature_low_q1.es
+
+#' 
+#' ## Repetition priming effects
+#' 
+## ----Repetition Priming Plots--------------------------------------------
+
+saccadeData_means_bysingletonrepetition <- 
+  saccadedata %>%
+  mutate(sub = as.factor(sub)) %>%
+  filter(dType != "Absent") %>% 
+  group_by(sub, condition, singleton_repetition, dType) %>%
+  summarise(saccade_to_target = mean(saccade_to_target, na.rm = T),
+            saccade_to_singleton = mean(saccade_to_singleton, na.rm = T),
+            saccade_to_nonsingleton = mean(saccade_to_nonsingleton, na.rm = T)/mean(num_nonsingletons, na.rm = T),
+            num_nonsingletons = mean(num_nonsingletons, na.rm = T),
+            capture = saccade_to_singleton - saccade_to_nonsingleton,
+            n = n())
+
+# capture_singleton_repetition.ANOVA <- aov_car(capture ~ singleton_repetition*condition*dType + Error(sub/singleton_repetition*dType), data = saccadeData_means_bysingletonrepetition, anova_table = list(es="pes"))
+
+#knitr::kable(nice(capture_singleton_repetition.ANOVA))
+
+capturemeans_bysingletonrepetition <- summarySEwithin2(data = saccadeData_means_bysingletonrepetition, measurevar = "capture", betweenvars = "condition", withinvars = c("singleton_repetition"), idvar = "sub", na.rm = T) %>%
+  select(-ends_with("Normed"))
+
+capturemeans_bysingletonrepetition_individual <- saccadeData_means_bysingletonrepetition %>% 
+  ungroup() %>% 
+  group_by(sub, condition, singleton_repetition) %>% 
+  select(capture) %>% 
+  summarize(m_capture = mean(capture))
+
+capturemeans_bysingletonrepetition_individual$singleton_repetition <- factor(capturemeans_bysingletonrepetition_individual$singleton_repetition)
+
+average_singleton_repetition <- saccadeData_means_bysingletonrepetition %>% 
+  ungroup() %>% 
+  group_by(singleton_repetition) %>% 
+  summarise(mean_n = mean(n))
+
+singleton_repetition_singleton_search_plot <- ggplot(data = filter(capturemeans_bysingletonrepetition, condition == "Singleton Search"), aes(x = singleton_repetition, y = capture, group = 1)) +
+  geom_path() +
+  geom_path(data = filter(capturemeans_bysingletonrepetition_individual, condition == "Singleton Search"), aes(group = sub, x = singleton_repetition, y = m_capture), alpha = .1) + 
+  geom_errorbar(aes(ymax = capture + se, ymin = capture - se), width = .1) +
+  geom_point(size = 3) + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_signif(comparisons = list(c(1,2)), annotations = "***", y_position = .3, colour = "black", tip_length = 0) +
+  labs(y = "Capture Score", x= "", tag = "A", title = "Singleton Search") +
+  #lims(y = c(-.2, .3)) +
+  scale_color_manual(values = vmacCols) +
+  scale_x_discrete(labels = c("No-repeat", "Repeat")) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(-.2,.45), breaks = seq(-.2, .45, .1), expand = c(0,0)) +
+  my_theme +
+  theme(strip.text = element_text(face = "bold"))
+
+singleton_repetition_feature_search_plot <- ggplot(data = filter(capturemeans_bysingletonrepetition, condition == "Feature Search"), aes(x = singleton_repetition, y = capture, group = 1)) +
+  geom_path() +
+  geom_path(data = filter(capturemeans_bysingletonrepetition_individual, condition == "Feature Search"), aes(group = sub, x = singleton_repetition, y = m_capture), alpha = .1) + 
+  geom_errorbar(aes(ymax = capture + se, ymin = capture - se), width = .1) +
+  geom_point(size = 3) + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  # geom_signif(comparisons = list(c(1,2)), annotations = "***", y_position = .3, colour = "black", tip_length = 0) +
+  labs(y = "Capture Score", x= "", tag = "B", title = "Feature Search") +
+  #lims(y = c(-.2, .3)) +
+  scale_color_manual(values = vmacCols) +
+  scale_x_discrete(labels = c("No-repeat", "Repeat")) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(-.2,.45), breaks = seq(-.2, .45, .1), expand = c(0,0)) +
+  my_theme +
+  theme(strip.text = element_text(face = "bold"))
+
+singleton_repetition_plot_horz <- plot_grid(singleton_repetition_singleton_search_plot, singleton_repetition_feature_search_plot, align = 'vh')
+# singleton_repetition_plot_horz <- ggdraw(add_sub(singleton_repetition_plot_horz, "Singleton Repetition", fontfamily = font_rc, vpadding=grid::unit(0,"lines"), y = 6, x = 0.55, vjust = 4.5))
+
+# plot_grid(singleton_repetition_plot_horz, title, ncol = 1, rel_heights = c(1,.1))
+
+# save_plot(here::here("analysis", "figures", "singleton_repetition_priming.png"), singleton_repetition_plot_horz, type = "cairo", ncol = 1.3, nrow = 1)
+
+
+#' 
+## ----Repetition Priming Statistics---------------------------------------
+capture_singleton_repetition.ANOVA <- aov_car(capture ~ singleton_repetition*condition*dType + Error(sub/singleton_repetition*dType), data = saccadeData_means_bysingletonrepetition, anova_table = list(es="pes"))
+
+knitr::kable(nice(capture_singleton_repetition.ANOVA))
+
+saccadeData_means_bysingletonrepetition_no_dtype <- 
+  saccadedata %>%
+  mutate(sub = as.factor(sub)) %>%
+  filter(dType != "Absent") %>% 
+  group_by(sub, condition, singleton_repetition) %>%
+  summarise(saccade_to_target = mean(saccade_to_target, na.rm = T),
+            saccade_to_singleton = mean(saccade_to_singleton, na.rm = T),
+            saccade_to_nonsingleton = mean(saccade_to_nonsingleton, na.rm = T)/mean(num_nonsingletons, na.rm = T),
+            num_nonsingletons = mean(num_nonsingletons, na.rm = T),
+            capture = saccade_to_singleton - saccade_to_nonsingleton,
+            n = n())
+
+capture_singleton_repetition_no_dtype.ANOVA <- aov_car(capture ~ singleton_repetition*condition + Error(sub/singleton_repetition), data = saccadeData_means_bysingletonrepetition_no_dtype, anova_table = list(es="pes"))
+
+singleton_search_no_repeat <- saccadeData_means_bysingletonrepetition_no_dtype %>% 
+  filter(condition == "Singleton Search", singleton_repetition == 0) %>% 
+  pull(capture)
+
+singleton_search_repeat <- saccadeData_means_bysingletonrepetition_no_dtype %>% 
+  filter(condition == "Singleton Search", singleton_repetition == 1) %>% 
+  pull(capture)
+
+singleton_search_singleton_repetition.ttest <- saccadeData_means_bysingletonrepetition_no_dtype %>% 
+  filter(condition == "Singleton Search") %>% 
+  t.test(formula = capture ~ singleton_repetition, data = ., paired = T)
+
+singleton_search_singleton_repetition.es <- dz_calculator(singleton_search_repeat, singleton_search_no_repeat)
+
+feature_search_no_repeat <- saccadeData_means_bysingletonrepetition_no_dtype %>% 
+  filter(condition == "Feature Search", singleton_repetition == 0) %>% 
+  pull(capture)
+
+feature_search_repeat <- saccadeData_means_bysingletonrepetition_no_dtype %>% 
+  filter(condition == "Feature Search", singleton_repetition == 1) %>% 
+  pull(capture)
+
+feature_search_singleton_repetition.ttest <- t.test(x = feature_search_repeat, y = feature_search_no_repeat, paired = T)
+
+feature_search_singleton_repetition.es <- dz_calculator(feature_search_repeat, feature_search_no_repeat)
+
+
+feature_search_singleton_repetition.BF <- ttestBF(x = feature_search_repeat, y = feature_search_no_repeat, paired = T)
+
+
+#' 
+#' 
+#' Summarising these findings: there is an effect of singleton repetition (where capture is reduced following a trial in which a singleton of any identity was presented) for singleton-search mode, but not feature search mode. 
+#' 
+## ----Contingency belief score data prep----------------------------------
+awaredata <- awaredata %>%
+  mutate(accuracy = case_when(colour == "high" & clicked_button == 3 & question_type == "to_target" ~ 1,
+                              colour == "low" & clicked_button == 2 & question_type == "to_target" ~ 1,
+                              question_type == "to_distractor" & clicked_button == 1 ~ 1,
+                              TRUE ~ 0)) %>%
+  mutate(belief_score = case_when(accuracy == 1 ~ confidence_rating,
+                                  TRUE ~ -confidence_rating))
+
+captureData_means_byparticipant$sub_num <- as.numeric(as.character(captureData_means_byparticipant$sub))
+
+awareness_scores <- right_join(awaredata, captureData_means_byparticipant, by = c("sub" = "sub_num")) %>%
+  filter(question_type == "to_distractor")
+
+awareness_scores_totarget <- right_join(awaredata, captureData_means_byparticipant, by = c("sub" = "sub_num")) %>%
+  filter(question_type == "to_target")
+
+
+
+#' 
+## ----Reward contingency belief data--------------------------------------
+high_reward_awareness.cor <- awareness_scores_totarget %>% 
+  filter(dType == "High", colour == "high") %>% 
+  cor.test(~ Capture + belief_score, data = .)
+
+high_reward_contingency_plot <- awareness_scores_totarget %>%
+  filter(dType == "High", colour == "high") %>%
+  ggplot(aes(x = belief_score, y = Capture)) +
+         geom_point(aes(shape = condition), alpha = .5, size = 3) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size = .5) +
+  scale_y_continuous(labels = scales::percent_format(accuracy=1), limits = c(-.25, .75)) +
+  scale_shape_manual(values = c(20,4))+
+  labs(x = "Reward contingency belief score", subtitle = "High reward") +
+  annotate(x = -5, y = .70, label=paste0("r(62) = ", remove_lz(high_reward_awareness.cor$estimate, 3)), geom = "text", size = 5, family = font_rc, hjust = 0) +
+  my_theme +
+  guides(shape = guide_legend(title = "Condition", override.aes = list(alpha = 1))) +
+  theme(axis.ticks.x = element_line(),
+        legend.position = "bottom")
+
+contingency_legend <- get_legend(high_reward_contingency_plot)
+
+high_reward_contingency_plot <- high_reward_contingency_plot +
+  theme(legend.position = "none")
+
+low_reward_awareness.cor <- awareness_scores_totarget %>% 
+  filter(dType == "Low", colour == "low") %>% 
+  cor.test(~ Capture + belief_score, data = .)
+
+low_reward_contingency_plot <- awareness_scores_totarget %>%
+  filter(dType == "Low", colour == "low") %>%
+  ggplot(aes(x = belief_score, y = Capture)) +
+         geom_point(aes(shape = condition), alpha = .5, size = 3) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size = .5) +
+  scale_y_continuous(labels = scales::percent_format(accuracy=1), limits = c(-.25, .75)) +
+  scale_shape_manual(values = c(20,4))+
+  labs(x = "Reward contingency belief score", subtitle = "Low reward") +
+  annotate(x = -5, y = .70, label=paste0("r(62) = ", remove_lz(low_reward_awareness.cor$estimate, 3)), geom = "text", size = 5, family = font_rc, hjust = 0) +
+  my_theme +
+  theme(axis.ticks.x = element_line())
+
+reward_contingency_plots <- plot_grid(high_reward_contingency_plot, low_reward_contingency_plot)
+
+reward_contingency_plots_legend <- plot_grid(reward_contingency_plots, contingency_legend, rel_heights = c(1,.1), nrow = 2)
+
+# save_plot(here::here("analysis", "figures", "reward_contingency_plot.png"), reward_contingency_plots_legend, ncol = 1.4, nrow = 1.1, type = "cairo")
+
+# Count people who reported correct colour--reward relationships for each distractor type:
+reward_awareness <- awareness_scores_totarget %>%
+    group_by(dType,colour) %>%
+    count(accuracy) %>%
+  mutate(accuracy = case_when(accuracy == 0 ~ "correct",
+                              TRUE ~ "incorrect")) %>% 
+    pivot_wider(names_from = accuracy, values_from = n) %>% 
+  mutate(total = correct + incorrect) %>% 
+  filter(dType == "High") %>% 
+  ungroup() %>% 
+  select(-dType)
+
+
+
+
+#' 
+#' 
+## ----Omission contingency belief data------------------------------------
+
+# Test for significant correlation b/w awareness test for omission contingency with high-val colour and capture by high-val colour
+
+high_omission_awareness.cor <- awareness_scores %>%
+  filter(question_type == "to_distractor", dType == "High", colour == "high") %>%
+  cor.test(~ Capture + belief_score, data = .)
+
+high_omission_contingency_plot <- awareness_scores %>%
+  filter(dType == "High", colour == "high") %>%
+  ggplot(aes(x = belief_score, y = Capture)) +
+         geom_point(aes(shape = condition), alpha = .5, size = 3) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size = .5) +
+  scale_y_continuous(labels = scales::percent_format(accuracy=1), limits = c(-.25, .75)) +
+  scale_shape_manual(values = c(20,4))+
+  labs(x = "Omission contingency belief score", subtitle = "High reward") +
+  annotate(x = -5, y = .70, label=paste0("r(62) = ", remove_lz(high_omission_awareness.cor$estimate, 3), "***"), geom = "text", size = 5, family = font_rc, hjust = 0) +
+  my_theme +
+  theme(axis.ticks.x = element_line())
+
+
+# Test for significant correlation b/w awareness test for omission contingency with low-val colour and capture by low-val colour
+
+low_omission_awareness.cor <- awareness_scores %>%
+  filter(question_type == "to_distractor", dType == "Low", colour == "low") %>%
+  cor.test(~ Capture + belief_score, data = .)
+
+low_omission_contingency_plot <- awareness_scores %>%
+  filter(dType == "Low", colour == "low") %>%
+  ggplot(aes(x = belief_score, y = Capture)) +
+         geom_point(aes(shape = condition), alpha = .5, size = 3) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "solid", colour = "black", size = .5) +
+  scale_y_continuous(labels = scales::percent_format(accuracy=1), limits = c(-.25, .75)) +
+  scale_shape_manual(values = c(20,4))+
+  labs(x = "Omission contingency belief score", subtitle = "Low reward") +
+  annotate(x = -5, y = .70, label=paste0("r(62) = ", remove_lz(low_omission_awareness.cor$estimate, 3)), geom = "text", size = 5, family = font_rc, hjust = 0) +
+  # facet_grid(~dType) +
+  my_theme +
+  theme(axis.ticks.x = element_line())
+
+omission_contingency_plots <- plot_grid(high_omission_contingency_plot, low_omission_contingency_plot)
+
+omission_contingency_plots_legend <- plot_grid(omission_contingency_plots, contingency_legend, rel_heights = c(1,.1), nrow = 2)
+
+# save_plot(here::here("analysis", "figures", "omission_contingency_plot.png"), omission_contingency_plots_legend, ncol = 1.4, nrow = 1.1, type = "cairo")
+
+omission_awareness <- awareness_scores %>%
+    group_by(dType,colour) %>%
+    count(accuracy) %>%
+  mutate(accuracy = case_when(accuracy == 0 ~ "correct",
+                              TRUE ~ "incorrect")) %>% 
+    pivot_wider(names_from = accuracy, values_from = n) %>% 
+  mutate(total = correct + incorrect) %>% 
+  filter(dType == "High") %>% 
+  ungroup() %>% 
+  select(-dType)
+
 
 #' 
 #' 
