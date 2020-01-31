@@ -2,7 +2,7 @@
 
 env:
   global:
-  - REPO=$DOCKER_USER/vmacfeaturesearch
+  - REPO=$DOCKER_USER/vmacfeaturesearch/.binder
 
 sudo: required
 
@@ -23,7 +23,7 @@ after_success:
   - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
   - export REPO=$DOCKER_USER/vmacfeaturesearch
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
-  - docker build -f .binder/Dockerfile -t $REPO:$COMMIT .
+  - docker build -f Dockerfile -t $REPO:$COMMIT .
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
   - docker push $REPO
