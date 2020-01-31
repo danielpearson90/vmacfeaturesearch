@@ -7,6 +7,6 @@ USER ${NB_USER}
 
 
 
-RUN wget https://github.com/danielpearson90/vmacfeaturesearch/raw/master/DESCRIPTION && R -e "options(repos = list(CRAN = 'http://mran.revolutionanalytics.com/snapshot/2020-01-31/')); devtools::install_deps()"
+RUN wget https://github.com/danielpearson90/vmacfeaturesearch/raw/master/DESCRIPTION && R -e "options(repos = list(CRAN = 'http://mran.revolutionanalytics.com/snapshot/2020-01-30/')); devtools::install_deps()"
 
 RUN rm DESCRIPTION.1; exit 0
