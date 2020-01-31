@@ -1,28 +1,36 @@
+Type: Compendium
 Package: vmacfeaturesearch
 Title: Research Compendium for VMAC Feature Search Project
-Version: 0.0.0.9000
-Authors@R:
+Version: 0.0.1
+Authors@R: 
     person(given = "Daniel",
            family = "Pearson",
            role = c("aut", "cre"),
-           email = "d.pearson@unsw.edu.au")
-Description: This repository contains the research compendium of a project that investigates whether overt attention to reward-related distractors can be suppressed under conditions that promote feature search (as in Gaspelin, Leonard, & Luck; 2017 - Attn Percept Psychophys)
-License: MIT + file LICENSE
-ByteCompile: true
+           email = "daniel.pearson@ucl.ac.uk",
+           comment = c(ORCID = "0000-0003-1903-4019"))
+Description: Research Compendium for VMAC Feature Search
+    Project
+License: CC-BY-4.0
+Depends: 
+    afex,
+    BayesFactor,
+    bookdown,
+    crayon,
+    data.table,
+    devtools,
+    dplyr,
+    emmeans,
+    grid,
+    here,
+    knitr,
+    papaja,
+    R.matlab,
+    rmarkdown,
+    scales,
+    tibble,
+    tidyverse,
+    tools
+Remotes: 
+    crsh/papaja
 Encoding: UTF-8
 LazyData: true
-URL: https://github.com/danielpearson90/vmacfeaturesearch
-BugReports: https://github.com/danielpearson90/vmacfeaturesearch/issues
-Imports: bookdown,
-    afex (>= 0.22-1),
-    BayesFactor (>= 0.9.12-4.2),
-    data.table (>= 1.11.8),
-    devtools (>= 2.0.1),
-    dplyr (>= 0.7.7),
-    emmeans (>= 1.3.0),
-    ggplot2 (>= 3.1.0),
-    here (>= 0.1),
-    knitr (>= 1.20),
-    R.matlab (>= 3.6.2),
-    tibble (>= 1.4.2),
-    tidyverse (>= 1.2.1)
